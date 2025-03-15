@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import ResponseValidator from '../utils/reponse.utils';
-import { HttpStatus } from '../Enums/res_status.enum';
+import { HttpStatus } from '../enums/res_status.enum';
 import { ResponseI } from '../models/response.model';
 import { UserI } from '../models/user.model';
 import UserService from '../services/user.service';
