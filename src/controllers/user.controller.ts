@@ -9,30 +9,35 @@ export default class UserController {
   public async create(req: Request, res: Response) {
     try {
       const user: UserI = req.body;
-      const response: ResponseI = {};
+      let response: ResponseI = {};
 
       if (!user || !user.email || !user.password || !user.name) {
-        response.message = 'Informações incompletas!';
-        ResponseValidator.response(req, res, HttpStatus.BAD_REQUEST, response);
-        return;
+        response = {
+          message: 'Informações incompletas!',
+          data: '',
+        };
+        return ResponseValidator.response(req, res, HttpStatus.BAD_REQUEST, response);
       }
 
-      const sucess: string = await UserService.create(user);
+      const newUser: ResponseI = await UserService.create(user);
 
-      if (sucess !== 'Sucesso') {
-        response.message = sucess;
-        ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
-        return;
+      if (!newUser.data) {
+        response = {
+          message: newUser.message,
+          data: '',
+        };
+        return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
       }
 
-      response.message = 'Usuário adicionado com sucesso!';
-      ResponseValidator.response(req, res, HttpStatus.OK, response);
+      response = newUser;
+      return ResponseValidator.response(req, res, HttpStatus.OK, response);
     } catch (err) {
       console.log(err);
       const response: ResponseI = {
         message: `Erro: ${err}`,
+        data: '',
       };
-      ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
+      return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
     }
   }
 }

@@ -1,3 +1,4 @@
+import { ResponseI } from '../models/response.model';
 import { User, UserI } from '../models/user.model';
 const bcrypt = require('bcrypt');
 
@@ -8,31 +9,54 @@ async function gerarHash(senha: string): Promise<string> {
 }
 
 export default class UserService {
-  public static async create(user: UserI): Promise<string> {
+  public static async create(user: UserI): Promise<ResponseI> {
     try {
+      let response: ResponseI = {};
       if (!user) {
-        return 'Nenhuma informação enviada';
+        return (response = {
+          message: 'Dados não informados!',
+          data: false,
+        });
+      }
+
+      const userExists: UserI[] = await User.findAll({ where: { username: user.username } });
+
+      if (userExists.length > 0) {
+        return (response = {
+          message: 'Este nome de usuário já foi cadastrado.',
+          data: false,
+        });
       }
 
       user.password = await gerarHash(user.password);
 
-      const sucess: string = await User.create({
+      const newUser: ResponseI = await User.create({
         email: user.email,
         password: user.password,
         name: user.name,
       })
         .then(e => {
-          return 'Sucesso';
+          return (response = {
+            message: 'Usuário adicionado com sucesso',
+            data: true,
+          });
         })
         .catch(e => {
           console.log(e);
-          return `Falha: ${e}`;
+          return (response = {
+            message: 'Erro ao adicionar usuário, verifique o log',
+            data: false,
+          });
         });
 
-      return sucess;
+      return newUser;
     } catch (err) {
+      let response: ResponseI = {};
       console.log(err);
-      return `Falha: ${err}`;
+      return (response = {
+        message: 'Erro ao adicionar usuário, verifique o log',
+        data: false,
+      });
     }
   }
 }

@@ -6,7 +6,6 @@ export interface UserI {
   password: string;
   name: string;
   username?: string | null;
-  birth?: Date | null;
   lastAcess?: Date | null;
   image?: string | null;
 }
@@ -36,10 +35,6 @@ export class User extends Model implements UserI {
   @AllowNull(true)
   @Column({ type: DataType.TEXT })
   username!: string | null;
-
-  @AllowNull(true)
-  @Column({ type: DataType.DATE })
-  birth!: Date | null;
 
   @AllowNull(true)
   @Column({ type: DataType.DATE })
