@@ -1,4 +1,5 @@
 export interface ResponseI {
-  message?: string;
+  message: string;
+  sucess: boolean;
   data?: any;
 }

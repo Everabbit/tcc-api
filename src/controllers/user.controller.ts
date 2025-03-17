@@ -6,36 +6,107 @@ import { UserI } from '../models/user.model';
 import UserService from '../services/user.service';
 
 export default class UserController {
-  public async create(req: Request, res: Response) {
+  public async register(req: Request, res: Response) {
     try {
       const user: UserI = req.body;
-      let response: ResponseI = {};
+      let response: ResponseI = {
+        message: '',
+        sucess: false,
+      };
 
       if (!user || !user.email || !user.password || !user.name) {
         response = {
           message: 'Informações incompletas!',
-          data: '',
+          sucess: false,
         };
         return ResponseValidator.response(req, res, HttpStatus.BAD_REQUEST, response);
       }
 
       const newUser: ResponseI = await UserService.create(user);
 
-      if (!newUser.data) {
+      if (!newUser.sucess) {
         response = {
           message: newUser.message,
-          data: '',
+          sucess: false,
         };
         return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
       }
 
-      response = newUser;
+      const jwtToken: ResponseI = await UserService.signJwt(newUser.data);
+
+      if (!jwtToken.sucess) {
+        response = {
+          message: jwtToken.message,
+          sucess: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
+      } else {
+        response = {
+          message: newUser.message,
+          sucess: true,
+          data: jwtToken.data,
+        };
+      }
+
       return ResponseValidator.response(req, res, HttpStatus.OK, response);
     } catch (err) {
       console.log(err);
       const response: ResponseI = {
         message: `Erro: ${err}`,
-        data: '',
+        sucess: false,
+      };
+      return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
+    }
+  }
+
+  public async login(req: Request, res: Response) {
+    try {
+      const user: UserI = req.body;
+      let response: ResponseI = {
+        message: '',
+        sucess: false,
+      };
+
+      if (!user || !user.email || !user.password) {
+        response = {
+          message: 'Informações incompletas!',
+          sucess: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.BAD_REQUEST, response);
+      }
+
+      const newUser: ResponseI = await UserService.login(user);
+
+      if (!newUser.sucess) {
+        response = {
+          message: newUser.message,
+          sucess: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
+      }
+
+      const jwtToken: ResponseI = await UserService.signJwt(newUser.data);
+
+      if (!jwtToken.sucess) {
+        response = {
+          message: jwtToken.message,
+          sucess: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
+      } else {
+        response = {
+          message: newUser.message,
+          sucess: true,
+          data: jwtToken.data,
+        };
+      }
+
+      return ResponseValidator.response(req, res, HttpStatus.OK, response);
+    } catch (err) {
+      console.log(err);
+      const response: ResponseI = {
+        message: `Erro: ${err}`,
+        sucess: false,
       };
       return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
     }
