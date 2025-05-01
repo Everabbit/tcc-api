@@ -154,7 +154,7 @@ export default class UserService {
 
       const JWT_SECRET = process.env.SECRET_KEY;
 
-      const token: string = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, { expiresIn: '1h' });
+      const token: string = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET);
 
       response = {
         message: 'Token criado com sucesso!',
