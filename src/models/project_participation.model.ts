@@ -26,7 +26,7 @@ export interface ProjectParticipationI {
 }
 
 @Table({
-  tableName: 'users_projects',
+  tableName: 'project_participation',
   timestamps: true,
 })
 export class ProjectParticipation extends Model implements ProjectParticipationI {
