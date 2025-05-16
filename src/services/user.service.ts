@@ -1,4 +1,4 @@
-import { ResponseI } from '../models/response.model';
+import { ResponseI } from '../interfaces/response.interface';
 import { User, UserI } from '../models/user.model';
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');

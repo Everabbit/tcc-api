@@ -1,13 +1,16 @@
-import { AllowNull, AutoIncrement, Column, DataType, Model, PrimaryKey, Table } from 'sequelize-typescript';
+import { AllowNull, AutoIncrement, Column, DataType, ForeignKey, Model, PrimaryKey, Table } from 'sequelize-typescript';
 import { ProjectStatus } from '../enums/project_status.enum';
+import { User } from './user.model';
 
 export interface ProjectI {
   id?: number;
+  creatorId: number;
   name: string;
   description?: string;
-  banner?: string;
   status: ProjectStatus;
-  limitTime?: Date | null;
+  banner?: string;
+  deadline?: Date | null;
+  progress: number;
 }
 
 @Table({
@@ -21,6 +24,11 @@ export class Project extends Model implements ProjectI {
   id?: number;
 
   @AllowNull(false)
+  @ForeignKey(() => User)
+  @Column({ type: DataType.INTEGER })
+  creatorId!: number;
+
+  @AllowNull(false)
   @Column({ type: DataType.STRING })
   name!: string;
 
@@ -28,15 +36,19 @@ export class Project extends Model implements ProjectI {
   @Column({ type: DataType.STRING })
   description?: string | undefined;
 
+  @AllowNull(false)
+  @Column({ type: DataType.INTEGER })
+  status!: ProjectStatus;
+
   @AllowNull(true)
   @Column({ type: DataType.STRING })
   banner?: string | undefined;
 
   @AllowNull(false)
-  @Column({ type: DataType.INTEGER })
-  status!: ProjectStatus;
+  @Column({ type: DataType.DATE })
+  deadline?: Date | null;
 
   @AllowNull(false)
-  @Column({ type: DataType.DATE })
-  limitTime?: Date | null;
+  @Column({ type: DataType.INTEGER })
+  progress!: number;
 }

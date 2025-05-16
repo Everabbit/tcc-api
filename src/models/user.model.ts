@@ -2,12 +2,11 @@ import { AllowNull, AutoIncrement, Column, DataType, Model, PrimaryKey, Table } 
 
 export interface UserI {
   id?: number;
+  fullName: string;
   email: string;
   password: string;
-  name: string;
   username?: string | null;
   lastAcess?: Date | null;
-  image?: string | null;
 }
 
 @Table({
@@ -15,32 +14,28 @@ export interface UserI {
   timestamps: true,
 })
 export class User extends Model implements UserI {
-  @PrimaryKey
   @AutoIncrement
+  @PrimaryKey
   @Column({ type: DataType.INTEGER })
-  id!: number;
+  id?: number;
 
   @AllowNull(false)
-  @Column({ type: DataType.TEXT })
+  @Column({ type: DataType.STRING })
+  fullName!: string;
+
+  @AllowNull(false)
+  @Column({ type: DataType.STRING })
   email!: string;
 
   @AllowNull(false)
-  @Column({ type: DataType.TEXT })
+  @Column({ type: DataType.STRING })
   password!: string;
 
-  @AllowNull(false)
-  @Column({ type: DataType.TEXT })
-  name!: string;
-
   @AllowNull(true)
-  @Column({ type: DataType.TEXT })
-  username!: string | null;
+  @Column({ type: DataType.STRING })
+  username?: string | null;
 
   @AllowNull(true)
   @Column({ type: DataType.DATE })
   lastAcess?: Date | null;
-
-  @AllowNull(true)
-  @Column({ type: DataType.TEXT })
-  image?: string | null;
 }

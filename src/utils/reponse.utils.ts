@@ -1,4 +1,4 @@
-import { ResponseI } from '../models/response.model';
+import { ResponseI } from '../interfaces/response.interface';
 import { Request, Response } from 'express';
 
 export default class ResponseValidator {

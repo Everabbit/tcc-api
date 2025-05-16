@@ -1,6 +1,6 @@
 import { Sequelize } from 'sequelize-typescript';
 import { User } from './models/user.model';
-import { Project } from './models/projects.model';
+import { Project } from './models/project.model';
 import { UserProject } from './models/users_projects.model';
 
 const sequelize = new Sequelize({

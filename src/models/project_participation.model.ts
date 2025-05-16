@@ -10,31 +10,30 @@ import {
   Table,
   Model,
 } from 'sequelize-typescript';
-import { Project, ProjectI } from './projects.model';
+import { Project, ProjectI } from './project.model';
 import { User, UserI } from './user.model';
+import { RolesEnum } from '../enums/roles.enum';
 
-export interface UserProjectI {
+export interface ProjectParticipationI {
   id?: number;
-  owner: boolean;
   userId: number;
   user?: UserI;
   projectId: number;
   project?: ProjectI;
+  role: RolesEnum;
+  invitedAt: Date;
+  acceptedAt?: Date | null;
 }
 
 @Table({
   tableName: 'users_projects',
   timestamps: true,
 })
-export class UserProject extends Model implements UserProjectI {
+export class ProjectParticipation extends Model implements ProjectParticipationI {
   @AutoIncrement
   @PrimaryKey
   @Column({ type: DataType.INTEGER })
   id?: number;
-
-  @AllowNull(false)
-  @Column({ type: DataType.INTEGER })
-  owner!: boolean;
 
   @AllowNull(false)
   @ForeignKey(() => User)
@@ -42,7 +41,7 @@ export class UserProject extends Model implements UserProjectI {
   userId!: number;
 
   @BelongsTo(() => User)
-  user?: UserI | undefined;
+  user?: User;
 
   @AllowNull(false)
   @ForeignKey(() => Project)
@@ -50,5 +49,17 @@ export class UserProject extends Model implements UserProjectI {
   projectId!: number;
 
   @BelongsTo(() => Project)
-  project?: ProjectI | undefined;
+  project?: Project;
+
+  @AllowNull(false)
+  @Column({ type: DataType.INTEGER })
+  role!: RolesEnum;
+
+  @AllowNull(false)
+  @Column({ type: DataType.DATE })
+  invitedAt!: Date;
+
+  @AllowNull(true)
+  @Column({ type: DataType.DATE })
+  acceptedAt?: Date | null;
 }
