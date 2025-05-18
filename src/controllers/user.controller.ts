@@ -4,6 +4,7 @@ import { HttpStatus } from '../enums/res_status.enum';
 import { ResponseI } from '../interfaces/response.interface';
 import { UserI } from '../models/user.model';
 import UserService from '../services/user.service';
+import { fromBase64 } from '../utils/transform.utils';
 
 export default class UserController {
   public async register(req: Request, res: Response) {
@@ -13,6 +14,10 @@ export default class UserController {
         message: '',
         sucess: false,
       };
+
+      user.email = fromBase64(user.email);
+      user.password = fromBase64(user.password);
+      user.fullName = fromBase64(user.fullName);
 
       if (!user || !user.email || !user.password || !user.fullName) {
         response = {

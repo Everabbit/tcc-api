@@ -39,7 +39,7 @@ export default class UserService {
       const newUser: ResponseI = await User.create({
         email: user.email,
         password: user.password,
-        name: user.fullName,
+        fullName: user.fullName,
         lastAcess: lastAcess,
       })
         .then(e => {
