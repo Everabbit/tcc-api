@@ -28,6 +28,7 @@ export interface ProjectParticipationI {
 @Table({
   tableName: 'project_participation',
   timestamps: true,
+  underscored: true,
 })
 export class ProjectParticipation extends Model implements ProjectParticipationI {
   @AutoIncrement

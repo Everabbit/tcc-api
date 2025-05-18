@@ -5,44 +5,50 @@ import {
   Column,
   DataType,
   ForeignKey,
-  Model,
+  HasOne,
   PrimaryKey,
   Table,
+  Model,
 } from 'sequelize-typescript';
 import { Project, ProjectI } from './project.model';
 
-export interface TagI {
+export interface GitHubLinkI {
   id?: number;
   projectId: number;
   project?: ProjectI;
-  name: string;
-  color?: string;
+  repoUrl: string;
+  accessToken: string;
+  lastSync: Date;
 }
 
 @Table({
-  tableName: 'tags',
+  tableName: 'github_links',
   timestamps: true,
   underscored: true,
 })
-export class Tag extends Model implements TagI {
+export class GitHubLink extends Model<GitHubLinkI> {
   @PrimaryKey
   @AutoIncrement
-  @Column({ type: DataType.INTEGER })
-  id?: number;
+  @Column(DataType.INTEGER)
+  id!: number;
 
   @AllowNull(false)
   @ForeignKey(() => Project)
-  @Column({ type: DataType.INTEGER })
+  @Column(DataType.INTEGER)
   projectId!: number;
 
   @BelongsTo(() => Project)
-  project?: ProjectI;
+  project?: Project;
 
   @AllowNull(false)
-  @Column({ type: DataType.STRING })
-  name!: string;
+  @Column(DataType.STRING)
+  repoUrl!: string;
+
+  @AllowNull(false)
+  @Column(DataType.STRING)
+  accessToken!: string;
 
   @AllowNull(true)
-  @Column({ type: DataType.STRING })
-  color?: string;
+  @Column(DataType.DATE)
+  lastSync!: Date;
 }

@@ -24,6 +24,7 @@ export interface UserPreferencesI {
 @Table({
   tableName: 'user_preferences',
   timestamps: true,
+  underscored: true,
 })
 export class UserPreferences extends Model implements UserPreferencesI {
   @AutoIncrement

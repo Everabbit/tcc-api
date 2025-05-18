@@ -6,6 +6,10 @@ import { UserPreferences } from './models/user_preferences.model';
 import { Version } from './models/version.model';
 import { Task } from './models/task.models';
 import { Tag } from './models/tag.model';
+import { GitHubLink } from './models/github_link.model';
+import { Commit } from './models/commit.model';
+import { Attachment } from './models/attachment.model';
+import { Comment } from './models/comment.model';
 
 const sequelize = new Sequelize({
   database: process.env.DATABASE,
@@ -15,7 +19,19 @@ const sequelize = new Sequelize({
   password: process.env.DATABASE_PASSWORD,
   host: process.env.DATABASE_HOST,
   port: Number(process.env.DATABASE_PORT),
-  models: [User, Project, ProjectParticipation, UserPreferences, Version, Task, Tag], // ARQUIVOS DE MODEL
+  models: [
+    User,
+    Project,
+    ProjectParticipation,
+    UserPreferences,
+    Version,
+    Task,
+    Tag,
+    GitHubLink,
+    Commit,
+    Comment,
+    Attachment,
+  ], // ARQUIVOS DE MODEL
   logging: false, // Opcional: desativa logs de SQL no console
 });
 

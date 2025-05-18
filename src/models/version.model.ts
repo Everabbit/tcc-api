@@ -27,6 +27,7 @@ export interface VersionI {
 @Table({
   tableName: 'versions',
   timestamps: true,
+  underscored: true,
 })
 export class Version extends Model implements VersionI {
   @PrimaryKey

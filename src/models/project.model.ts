@@ -16,6 +16,7 @@ export interface ProjectI {
 @Table({
   tableName: 'projects',
   timestamps: true,
+  underscored: true,
 })
 export class Project extends Model implements ProjectI {
   @AutoIncrement

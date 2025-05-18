@@ -23,6 +23,7 @@ export interface TaskTagI {
 @Table({
   tableName: 'task_tag',
   timestamps: true,
+  underscored: true,
 })
 export default class TaskTag extends Model implements TaskTagI {
   @PrimaryKey

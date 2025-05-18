@@ -12,6 +12,7 @@ export interface UserI {
 @Table({
   tableName: 'users',
   timestamps: true,
+  underscored: true,
 })
 export class User extends Model implements UserI {
   @AutoIncrement

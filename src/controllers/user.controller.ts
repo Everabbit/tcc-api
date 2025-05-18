@@ -14,7 +14,7 @@ export default class UserController {
         sucess: false,
       };
 
-      if (!user || !user.email || !user.password || !user.name) {
+      if (!user || !user.email || !user.password || !user.fullName) {
         response = {
           message: 'Informações incompletas!',
           sucess: false,
