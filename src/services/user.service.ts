@@ -93,7 +93,6 @@ export default class UserService {
       }
 
       const verifyPassword = await bcrypt.compare(user.password, userExists.password);
-      console.log(user.password, userExists.password, verifyPassword);
 
       if (!verifyPassword) {
         return (response = {
@@ -211,6 +210,90 @@ export default class UserService {
       console.log(err);
       let response: ResponseI = {
         message: 'Erro ao validar token de usuário, consulte o Log.',
+        sucess: false,
+      };
+      return response;
+    }
+  }
+  public static async getJwtId(token: string): Promise<ResponseI> {
+    try {
+      let response: ResponseI = {
+        message: '',
+        sucess: false,
+      };
+      if (!token) {
+        return (response = {
+          message: 'Token não informado!',
+          sucess: false,
+        });
+      }
+
+      const JWT_SECRET: string | undefined = process.env.SECRET_KEY;
+
+      if (!JWT_SECRET) {
+        return (response = {
+          message: 'Chave secreta não informada!',
+          sucess: false,
+        });
+      }
+      console.log(token);
+      const decoded = jwt.decode(token, JWT_SECRET);
+      console.log(decoded);
+
+      if (!decoded) {
+        return (response = {
+          message: 'Token inválido!',
+          sucess: false,
+        });
+      } else {
+        return (response = {
+          message: 'Token válido!',
+          sucess: true,
+          data: decoded.userId,
+        });
+      }
+    } catch (err) {
+      console.log(err);
+      let response: ResponseI = {
+        message: 'Erro ao validar token de usuário, consulte o Log.',
+        sucess: false,
+      };
+      return response;
+    }
+  }
+  public static async getBasicUserInfo(userId: number): Promise<ResponseI> {
+    try {
+      let response: ResponseI = {
+        message: '',
+        sucess: false,
+      };
+      if (!userId) {
+        return (response = {
+          message: 'Id do usuário não informado!',
+          sucess: false,
+        });
+      }
+      const user: UserI | null = await User.findOne({
+        where: { id: userId },
+        attributes: ['id', 'fullName', 'email', 'username', 'image'],
+      });
+
+      if (!user) {
+        return (response = {
+          message: 'Usuário não encontrado!',
+          sucess: false,
+        });
+      } else {
+        return (response = {
+          message: 'Usuário encontrado!',
+          sucess: true,
+          data: user,
+        });
+      }
+    } catch (err) {
+      console.log(err);
+      let response: ResponseI = {
+        message: 'Erro ao buscar informações do usuário, consulte o Log.',
         sucess: false,
       };
       return response;

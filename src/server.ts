@@ -21,7 +21,7 @@ sequelize
   .catch(err => console.error('Erro ao conectar com o banco:', err));
 
 sequelize
-  .sync({ force: true }) // force: true recria tabelas a cada execução
+  .sync({ force: false }) // force: true recria tabelas a cada execução
   .then(() => console.log('Tabelas sincronizadas com sucesso!'))
   .catch(err => console.error('Erro ao sincronizar tabelas:', err));
 

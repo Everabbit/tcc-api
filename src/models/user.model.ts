@@ -7,6 +7,7 @@ export interface UserI {
   password: string;
   username?: string | null;
   lastAcess?: Date | null;
+  image?: string | null;
 }
 
 @Table({
@@ -39,4 +40,8 @@ export class User extends Model implements UserI {
   @AllowNull(true)
   @Column({ type: DataType.DATE })
   lastAcess?: Date | null;
+
+  @AllowNull(true)
+  @Column({ type: DataType.STRING })
+  image?: string | null;
 }
