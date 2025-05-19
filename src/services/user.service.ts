@@ -172,4 +172,48 @@ export default class UserService {
       return response;
     }
   }
+  public static async verifyJwt(token: string): Promise<ResponseI> {
+    try {
+      let response: ResponseI = {
+        message: '',
+        sucess: false,
+      };
+
+      if (!token) {
+        return (response = {
+          message: 'Token não informado!',
+          sucess: false,
+        });
+      }
+
+      const JWT_SECRET: string | undefined = process.env.SECRET_KEY;
+
+      if (!JWT_SECRET) {
+        return (response = {
+          message: 'Chave secreta não informada!',
+          sucess: false,
+        });
+      }
+      const decoded: boolean = jwt.verify(token, JWT_SECRET);
+
+      if (!decoded) {
+        return (response = {
+          message: 'Token inválido!',
+          sucess: false,
+        });
+      } else {
+        return (response = {
+          message: 'Token válido!',
+          sucess: true,
+        });
+      }
+    } catch (err) {
+      console.log(err);
+      let response: ResponseI = {
+        message: 'Erro ao validar token de usuário, consulte o Log.',
+        sucess: false,
+      };
+      return response;
+    }
+  }
 }

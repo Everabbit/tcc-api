@@ -116,4 +116,38 @@ export default class UserController {
       return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
     }
   }
+  public async validateToken(req: Request, res: Response) {
+    try {
+      const token: string = req.headers.authorization?.toString() || '';
+      console.log(token);
+      let response: ResponseI = {
+        message: '',
+        sucess: false,
+      };
+
+      const validateJwt: ResponseI = await UserService.verifyJwt(token);
+
+      if (!validateJwt.sucess) {
+        response = {
+          message: validateJwt.message,
+          sucess: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.UNAUTHORIZED, response);
+      }
+
+      response = {
+        message: 'Token válido!',
+        sucess: true,
+      };
+      return ResponseValidator.response(req, res, HttpStatus.OK, response);
+    } catch (err) {
+      console.log(err);
+      const response: ResponseI = {
+        message: `Erro: ${err}`,
+        sucess: false,
+        data: false,
+      };
+      return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
+    }
+  }
 }
