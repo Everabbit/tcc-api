@@ -236,9 +236,8 @@ export default class UserService {
           sucess: false,
         });
       }
-      console.log(token);
+
       const decoded = jwt.decode(token, JWT_SECRET);
-      console.log(decoded);
 
       if (!decoded) {
         return (response = {

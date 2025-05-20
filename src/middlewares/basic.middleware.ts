@@ -18,8 +18,8 @@ export default class BasicMiddleware {
       return res.status(401).json({ message: 'Token inválido' });
     }
     const userId: ResponseI = await userService.getJwtId(tokenValue);
-    console.log(userId);
-    req.params.userId = userId;
+
+    req.params.userId = userId.data;
     next();
   }
 }
