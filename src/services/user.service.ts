@@ -103,7 +103,7 @@ export default class UserService {
 
       const lastAcess: Date = new Date();
 
-      const newUser: ResponseI = await User.update(
+      const update: ResponseI = await User.update(
         {
           lastAcess: lastAcess,
         },
@@ -124,7 +124,15 @@ export default class UserService {
           });
         });
 
-      return newUser;
+      if (!update.sucess) {
+        return update;
+      }
+      response = {
+        message: 'Login realizado com sucesso',
+        sucess: true,
+        data: userExists,
+      };
+      return response;
     } catch (err) {
       let response: ResponseI = {
         message: '',
@@ -174,7 +182,7 @@ export default class UserService {
   public static async verifyJwt(token: string): Promise<ResponseI> {
     try {
       let response: ResponseI = {
-        message: '',
+        message: 'Token inválido ou expirado.',
         sucess: false,
       };
 
@@ -193,13 +201,14 @@ export default class UserService {
           sucess: false,
         });
       }
-      const decoded: boolean = jwt.verify(token, JWT_SECRET);
+      const decodedPayload: boolean = !!jwt.verify(token, JWT_SECRET);
 
-      if (!decoded) {
+      if (!decodedPayload) {
         return (response = {
           message: 'Token inválido!',
           sucess: false,
         });
+        JWT_SECRET;
       } else {
         return (response = {
           message: 'Token válido!',
@@ -266,6 +275,7 @@ export default class UserService {
         message: '',
         sucess: false,
       };
+
       if (!userId) {
         return (response = {
           message: 'Id do usuário não informado!',

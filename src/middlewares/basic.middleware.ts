@@ -1,25 +1,40 @@
-import { ResponseI } from '../interfaces/response.interface';
+import { Request, Response, NextFunction } from 'express';
+
 import userService from '../services/user.service';
+import { ResponseI } from '../interfaces/response.interface';
+import ResponseValidator from '../utils/reponse.utils';
+import { HttpStatus } from '../enums/res_status.enum';
 
 export default class BasicMiddleware {
-  public async validateToken(req: any, res: any, next: any) {
-    const token = req.headers.authorization;
+  public async validateToken(req: Request, res: Response, next: NextFunction) {
+    const authHeader = req.headers.authorization;
 
-    if (!token) {
-      return res.status(401).json({ message: 'Token não informado' });
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return ResponseValidator.response(req, res, HttpStatus.UNAUTHORIZED, {
+        message: 'Token inválido.',
+        sucess: false,
+      });
     }
-    const tokenValue = token.split(' ')[1];
-    if (!tokenValue) {
-      return res.status(401).json({ message: 'Token não informado' });
-    }
+    const tokenValue = authHeader.split(' ')[1];
+    const tokenValidationResponse: ResponseI = await userService.getJwtId(tokenValue);
 
-    const tokenId: ResponseI = await userService.verifyJwt(tokenValue);
-    if (!tokenId.sucess) {
-      return res.status(401).json({ message: 'Token inválido' });
+    if (!tokenValidationResponse.sucess || !tokenValidationResponse.data) {
+      const message = tokenValidationResponse.message || 'Token inválido.';
+      return ResponseValidator.response(req, res, HttpStatus.UNAUTHORIZED, {
+        message: 'Token inválido.',
+        sucess: false,
+      });
     }
-    const userId: ResponseI = await userService.getJwtId(tokenValue);
+    const decodedPayload: number = tokenValidationResponse.data;
 
-    req.params.userId = userId.data;
+    if (typeof decodedPayload !== 'number') {
+      return ResponseValidator.response(req, res, HttpStatus.UNAUTHORIZED, {
+        message: 'Token inválido.',
+        sucess: false,
+      });
+    }
+    (req as any).params = { ...req.params, userId: decodedPayload.toString() };
+
     next();
   }
 }
