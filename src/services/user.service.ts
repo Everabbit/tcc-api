@@ -293,6 +293,8 @@ export default class UserService {
           sucess: false,
         });
       } else {
+        const userNameSplits: string[] = user.fullName.split(' ');
+        user.fullName = userNameSplits[0] + ' ' + userNameSplits[userNameSplits.length - 1];
         return (response = {
           message: 'Usuário encontrado!',
           sucess: true,

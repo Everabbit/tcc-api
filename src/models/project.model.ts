@@ -45,7 +45,7 @@ export class Project extends Model implements ProjectI {
   @Column({ type: DataType.STRING })
   banner?: string | undefined;
 
-  @AllowNull(false)
+  @AllowNull(true)
   @Column({ type: DataType.DATE })
   deadline?: Date | null;
 

@@ -168,7 +168,6 @@ export default class UserController {
   public async getBasicInfoUser(req: Request, res: Response) {
     try {
       const userId: number = parseInt(req.params.userId);
-      console.log(userId);
       let response: ResponseI = {
         message: '',
         sucess: false,

@@ -4,6 +4,8 @@ import ResponseValidator from '../utils/reponse.utils';
 import { HttpStatus } from '../enums/res_status.enum';
 import ProjectService from '../services/projects.service';
 import { ProjectI } from '../models/project.model';
+import { ProjectCreateI } from '../interfaces/project.interface';
+import { ProjectStatus } from '../enums/project_status.enum';
 
 export default class ProjectController {
   public async createProject(req: Request, res: Response) {
@@ -14,7 +16,7 @@ export default class ProjectController {
       };
 
       const userId: number = parseInt(req.params.userId);
-      const project: ProjectI = req.body.project;
+      const project: ProjectCreateI = req.body;
 
       if (!userId) {
         response = {
@@ -23,8 +25,17 @@ export default class ProjectController {
         };
         return ResponseValidator.response(req, res, HttpStatus.BAD_REQUEST, response);
       }
+      const newProject: ProjectI = {
+        creatorId: userId,
+        name: project.name,
+        description: project.description,
+        status: ProjectStatus.ACTIVE,
+        banner: project.bannerFile ? project.bannerFile.name : undefined,
+        deadline: project.deadline ? new Date(project.deadline) : undefined,
+        progress: 0,
+      };
 
-      const projectCreated: ResponseI = await ProjectService.create(project, userId);
+      const projectCreated: ResponseI = await ProjectService.create(newProject);
 
       if (!projectCreated.sucess) {
         response = {

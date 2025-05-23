@@ -3,7 +3,7 @@ import { Project, ProjectI } from '../models/project.model';
 
 export default class ProjectService {
   //crud dos projetos
-  public static async create(project: ProjectI, userId: number): Promise<ResponseI> {
+  public static async create(project: ProjectI): Promise<ResponseI> {
     try {
       let response: ResponseI = {
         message: '',
@@ -28,7 +28,7 @@ export default class ProjectService {
 
       const newProject = await Project.create({
         name: project.name,
-        creatorId: userId,
+        creatorId: project.creatorId,
         description: project.description,
         status: project.status,
         banner: project.banner,
