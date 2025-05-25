@@ -12,17 +12,17 @@ export default class BasicMiddleware {
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return ResponseValidator.response(req, res, HttpStatus.UNAUTHORIZED, {
         message: 'Token inválido.',
-        sucess: false,
+        success: false,
       });
     }
     const tokenValue = authHeader.split(' ')[1];
     const tokenValidationResponse: ResponseI = await userService.getJwtId(tokenValue);
 
-    if (!tokenValidationResponse.sucess || !tokenValidationResponse.data) {
+    if (!tokenValidationResponse.success || !tokenValidationResponse.data) {
       const message = tokenValidationResponse.message || 'Token inválido.';
       return ResponseValidator.response(req, res, HttpStatus.UNAUTHORIZED, {
         message: 'Token inválido.',
-        sucess: false,
+        success: false,
       });
     }
     const decodedPayload: number = tokenValidationResponse.data;
@@ -30,7 +30,7 @@ export default class BasicMiddleware {
     if (typeof decodedPayload !== 'number') {
       return ResponseValidator.response(req, res, HttpStatus.UNAUTHORIZED, {
         message: 'Token inválido.',
-        sucess: false,
+        success: false,
       });
     }
     (req as any).params = { ...req.params, userId: decodedPayload.toString() };

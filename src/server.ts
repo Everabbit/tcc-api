@@ -9,7 +9,17 @@ const router = new ExpressRouter();
 
 // Middlewares
 app.use(cors());
-app.use(express.json()); // Para interpretar JSON no corpo das requisições
+app.use((req, res, next) => {
+  const contentType = req.headers['content-type'];
+
+  if (contentType?.includes('application/json')) {
+    express.json()(req, res, next);
+  } else if (contentType?.includes('application/x-www-form-urlencoded')) {
+    express.urlencoded({ extended: true })(req, res, next);
+  } else {
+    next();
+  }
+});
 
 // Rotas
 router.instanceRoutes(app);

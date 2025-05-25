@@ -12,42 +12,54 @@ export default class ProjectController {
     try {
       let response: ResponseI = {
         message: '',
-        sucess: false,
+        success: false,
       };
 
       const userId: number = parseInt(req.params.userId);
-      const project: ProjectCreateI = req.body;
+      const project: ProjectCreateI = JSON.parse(req.body.project);
+      const banner: Express.Multer.File | undefined = req.file;
 
       if (!userId) {
         response = {
           message: 'Id do usuário não informado!',
-          sucess: false,
+          success: false,
         };
         return ResponseValidator.response(req, res, HttpStatus.BAD_REQUEST, response);
       }
+
+      let bannerUploadUrl: string = '';
+
+      if (banner) {
+        bannerUploadUrl = banner.path;
+      }
+
+      console.log(bannerUploadUrl);
+
       const newProject: ProjectI = {
         creatorId: userId,
         name: project.name,
         description: project.description,
         status: ProjectStatus.ACTIVE,
-        banner: project.bannerFile ? project.bannerFile.name : undefined,
+        banner: bannerUploadUrl,
         deadline: project.deadline ? new Date(project.deadline) : undefined,
         progress: 0,
       };
 
+      console.log(newProject);
+
       const projectCreated: ResponseI = await ProjectService.create(newProject);
 
-      if (!projectCreated.sucess) {
+      if (!projectCreated.success) {
         response = {
           message: projectCreated.message,
-          sucess: false,
+          success: false,
         };
         return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
       }
 
       response = {
         message: 'Projeto criado com sucesso!',
-        sucess: true,
+        success: true,
         data: projectCreated.data,
       };
       return ResponseValidator.response(req, res, HttpStatus.OK, response);
@@ -55,7 +67,7 @@ export default class ProjectController {
       console.log(err);
       const response: ResponseI = {
         message: `Erro: ${err}`,
-        sucess: false,
+        success: false,
       };
       return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
     }

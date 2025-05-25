@@ -1,5 +1,9 @@
+import { UploadApiResponse } from 'cloudinary';
 import { ResponseI } from '../interfaces/response.interface';
 import { Project, ProjectI } from '../models/project.model';
+import { cloudinary } from '../configs/cloudinary';
+import { v4 as uuidv4 } from 'uuid';
+import streamifier from 'streamifier';
 
 export default class ProjectService {
   //crud dos projetos
@@ -7,12 +11,12 @@ export default class ProjectService {
     try {
       let response: ResponseI = {
         message: '',
-        sucess: false,
+        success: false,
       };
       if (!project || !project.name) {
         response = {
           message: 'Projeto inválido, verifique os dados.',
-          sucess: false,
+          success: false,
         };
         return response;
       }
@@ -21,7 +25,7 @@ export default class ProjectService {
       if (projectExists) {
         response = {
           message: 'Já existe um projeto com este nome.',
-          sucess: false,
+          success: false,
         };
         return response;
       }
@@ -38,13 +42,13 @@ export default class ProjectService {
       if (!newProject) {
         response = {
           message: 'Erro ao criar projeto, consulte o Log.',
-          sucess: false,
+          success: false,
         };
         return response;
       }
       response = {
         message: 'Projeto criado com sucesso.',
-        sucess: true,
+        success: true,
         data: newProject,
       };
       return response;
@@ -52,7 +56,7 @@ export default class ProjectService {
       console.log(err);
       let response: ResponseI = {
         message: 'Erro ao buscar informações do usuário, consulte o Log.',
-        sucess: false,
+        success: false,
       };
       return response;
     }

@@ -12,7 +12,7 @@ export default class UserController {
       const user: UserI = req.body;
       let response: ResponseI = {
         message: '',
-        sucess: false,
+        success: false,
       };
 
       user.email = fromBase64(user.email);
@@ -22,33 +22,33 @@ export default class UserController {
       if (!user || !user.email || !user.password || !user.fullName) {
         response = {
           message: 'Informações incompletas!',
-          sucess: false,
+          success: false,
         };
         return ResponseValidator.response(req, res, HttpStatus.BAD_REQUEST, response);
       }
 
       const newUser: ResponseI = await UserService.create(user);
 
-      if (!newUser.sucess) {
+      if (!newUser.success) {
         response = {
           message: newUser.message,
-          sucess: false,
+          success: false,
         };
         return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
       }
 
       const jwtToken: ResponseI = await UserService.signJwt(newUser.data);
 
-      if (!jwtToken.sucess) {
+      if (!jwtToken.success) {
         response = {
           message: jwtToken.message,
-          sucess: false,
+          success: false,
         };
         return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
       } else {
         response = {
           message: newUser.message,
-          sucess: true,
+          success: true,
           data: jwtToken.data,
         };
       }
@@ -58,7 +58,7 @@ export default class UserController {
       console.log(err);
       const response: ResponseI = {
         message: `Erro: ${err}`,
-        sucess: false,
+        success: false,
       };
       return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
     }
@@ -69,13 +69,13 @@ export default class UserController {
       const user: UserI = req.body;
       let response: ResponseI = {
         message: '',
-        sucess: false,
+        success: false,
       };
 
       if (!user || !user.email || !user.password) {
         response = {
           message: 'Informações incompletas!',
-          sucess: false,
+          success: false,
         };
         return ResponseValidator.response(req, res, HttpStatus.BAD_REQUEST, response);
       }
@@ -85,26 +85,26 @@ export default class UserController {
 
       const newUser: ResponseI = await UserService.login(user);
 
-      if (!newUser.sucess) {
+      if (!newUser.success) {
         response = {
           message: newUser.message,
-          sucess: false,
+          success: false,
         };
         return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
       }
 
       const jwtToken: ResponseI = await UserService.signJwt(newUser.data);
 
-      if (!jwtToken.sucess) {
+      if (!jwtToken.success) {
         response = {
           message: jwtToken.message,
-          sucess: false,
+          success: false,
         };
         return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
       } else {
         response = {
           message: newUser.message,
-          sucess: true,
+          success: true,
           data: jwtToken.data,
         };
       }
@@ -114,7 +114,7 @@ export default class UserController {
       console.log(err);
       const response: ResponseI = {
         message: `Erro: ${err}`,
-        sucess: false,
+        success: false,
       };
       return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
     }
@@ -123,7 +123,7 @@ export default class UserController {
     try {
       let response: ResponseI = {
         message: '',
-        sucess: false,
+        success: false,
       };
 
       const authHeader: string | undefined = req.headers.authorization;
@@ -136,30 +136,30 @@ export default class UserController {
       if (!jwtToken) {
         response = {
           message: 'Token não fornecido ou malformado.',
-          sucess: false,
+          success: false,
         };
         return ResponseValidator.response(req, res, HttpStatus.UNAUTHORIZED, response);
       }
       const validateJwt: ResponseI = await UserService.verifyJwt(jwtToken);
 
-      if (!validateJwt.sucess) {
+      if (!validateJwt.success) {
         response = {
           message: validateJwt.message,
-          sucess: false,
+          success: false,
         };
         return ResponseValidator.response(req, res, HttpStatus.UNAUTHORIZED, response);
       }
 
       response = {
         message: 'Token válido!',
-        sucess: true,
+        success: true,
       };
       return ResponseValidator.response(req, res, HttpStatus.OK, response);
     } catch (err) {
       console.log(err);
       const response: ResponseI = {
         message: `Erro: ${err}`,
-        sucess: false,
+        success: false,
         data: false,
       };
       return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
@@ -170,29 +170,29 @@ export default class UserController {
       const userId: number = parseInt(req.params.userId);
       let response: ResponseI = {
         message: '',
-        sucess: false,
+        success: false,
       };
       if (!userId) {
         response = {
           message: 'Id do usuário não informado!',
-          sucess: false,
+          success: false,
         };
         return ResponseValidator.response(req, res, HttpStatus.BAD_REQUEST, response);
       }
 
       const user: ResponseI = await UserService.getBasicUserInfo(userId);
 
-      if (!user.sucess) {
+      if (!user.success) {
         response = {
           message: user.message,
-          sucess: false,
+          success: false,
         };
         return ResponseValidator.response(req, res, HttpStatus.NOT_FOUND, response);
       }
 
       response = {
         message: 'Usuário encontrado!',
-        sucess: true,
+        success: true,
         data: user.data,
       };
       return ResponseValidator.response(req, res, HttpStatus.OK, response);
@@ -200,7 +200,7 @@ export default class UserController {
       console.log(err);
       const response: ResponseI = {
         message: `Erro: ${err}`,
-        sucess: false,
+        success: false,
         data: false,
       };
       return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);

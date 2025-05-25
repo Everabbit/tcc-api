@@ -14,12 +14,12 @@ export default class UserService {
     try {
       let response: ResponseI = {
         message: '',
-        sucess: false,
+        success: false,
       };
       if (!user) {
         return (response = {
           message: 'Dados não informados!',
-          sucess: false,
+          success: false,
         });
       }
 
@@ -28,7 +28,7 @@ export default class UserService {
       if (userExists.length > 0) {
         return (response = {
           message: 'Este email já foi cadastrado.',
-          sucess: false,
+          success: false,
         });
       }
 
@@ -45,7 +45,7 @@ export default class UserService {
         .then(e => {
           return (response = {
             message: 'Usuário adicionado com sucesso',
-            sucess: true,
+            success: true,
             data: e,
           });
         })
@@ -53,7 +53,7 @@ export default class UserService {
           console.log(e);
           return (response = {
             message: 'Erro ao adicionar usuário, verifique o log',
-            sucess: false,
+            success: false,
           });
         });
 
@@ -61,12 +61,12 @@ export default class UserService {
     } catch (err) {
       let response: ResponseI = {
         message: '',
-        sucess: false,
+        success: false,
       };
       console.log(err);
       return (response = {
         message: 'Erro ao adicionar usuário, verifique o log',
-        sucess: false,
+        success: false,
       });
     }
   }
@@ -74,12 +74,12 @@ export default class UserService {
     try {
       let response: ResponseI = {
         message: '',
-        sucess: false,
+        success: false,
       };
       if (!user) {
         return (response = {
           message: 'Dados não informados!',
-          sucess: false,
+          success: false,
         });
       }
 
@@ -88,7 +88,7 @@ export default class UserService {
       if (!userExists) {
         return (response = {
           message: 'Usuário não encontrado!',
-          sucess: false,
+          success: false,
         });
       }
 
@@ -97,7 +97,7 @@ export default class UserService {
       if (!verifyPassword) {
         return (response = {
           message: 'Senha incorreta.',
-          sucess: false,
+          success: false,
         });
       }
 
@@ -112,7 +112,7 @@ export default class UserService {
         .then(e => {
           return (response = {
             message: 'Login realizado com sucesso',
-            sucess: true,
+            success: true,
             data: e,
           });
         })
@@ -120,28 +120,28 @@ export default class UserService {
           console.log(e);
           return (response = {
             message: 'Erro ao atualizar usuário, verifique o log',
-            sucess: false,
+            success: false,
           });
         });
 
-      if (!update.sucess) {
+      if (!update.success) {
         return update;
       }
       response = {
         message: 'Login realizado com sucesso',
-        sucess: true,
+        success: true,
         data: userExists,
       };
       return response;
     } catch (err) {
       let response: ResponseI = {
         message: '',
-        sucess: false,
+        success: false,
       };
       console.log(err);
       return (response = {
         message: 'Erro ao realizar login de usuário, verifique o log',
-        sucess: false,
+        success: false,
       });
     }
   }
@@ -149,13 +149,13 @@ export default class UserService {
     try {
       let response: ResponseI = {
         message: '',
-        sucess: false,
+        success: false,
       };
 
       if (!user) {
         return (response = {
           message: 'Dados não informados!',
-          sucess: false,
+          success: false,
         });
       }
 
@@ -165,7 +165,7 @@ export default class UserService {
 
       response = {
         message: 'Token criado com sucesso!',
-        sucess: true,
+        success: true,
         data: token,
       };
 
@@ -174,7 +174,7 @@ export default class UserService {
       console.log(err);
       let response: ResponseI = {
         message: 'Erro ao gerar token de usuário, consulte o Log.',
-        sucess: false,
+        success: false,
       };
       return response;
     }
@@ -183,13 +183,13 @@ export default class UserService {
     try {
       let response: ResponseI = {
         message: 'Token inválido ou expirado.',
-        sucess: false,
+        success: false,
       };
 
       if (!token) {
         return (response = {
           message: 'Token não informado!',
-          sucess: false,
+          success: false,
         });
       }
 
@@ -198,7 +198,7 @@ export default class UserService {
       if (!JWT_SECRET) {
         return (response = {
           message: 'Chave secreta não informada!',
-          sucess: false,
+          success: false,
         });
       }
       const decodedPayload: boolean = !!jwt.verify(token, JWT_SECRET);
@@ -206,20 +206,20 @@ export default class UserService {
       if (!decodedPayload) {
         return (response = {
           message: 'Token inválido!',
-          sucess: false,
+          success: false,
         });
         JWT_SECRET;
       } else {
         return (response = {
           message: 'Token válido!',
-          sucess: true,
+          success: true,
         });
       }
     } catch (err) {
       console.log(err);
       let response: ResponseI = {
         message: 'Erro ao validar token de usuário, consulte o Log.',
-        sucess: false,
+        success: false,
       };
       return response;
     }
@@ -228,12 +228,12 @@ export default class UserService {
     try {
       let response: ResponseI = {
         message: '',
-        sucess: false,
+        success: false,
       };
       if (!token) {
         return (response = {
           message: 'Token não informado!',
-          sucess: false,
+          success: false,
         });
       }
 
@@ -242,7 +242,7 @@ export default class UserService {
       if (!JWT_SECRET) {
         return (response = {
           message: 'Chave secreta não informada!',
-          sucess: false,
+          success: false,
         });
       }
 
@@ -251,12 +251,12 @@ export default class UserService {
       if (!decoded) {
         return (response = {
           message: 'Token inválido!',
-          sucess: false,
+          success: false,
         });
       } else {
         return (response = {
           message: 'Token válido!',
-          sucess: true,
+          success: true,
           data: decoded.userId,
         });
       }
@@ -264,7 +264,7 @@ export default class UserService {
       console.log(err);
       let response: ResponseI = {
         message: 'Erro ao validar token de usuário, consulte o Log.',
-        sucess: false,
+        success: false,
       };
       return response;
     }
@@ -273,13 +273,13 @@ export default class UserService {
     try {
       let response: ResponseI = {
         message: '',
-        sucess: false,
+        success: false,
       };
 
       if (!userId) {
         return (response = {
           message: 'Id do usuário não informado!',
-          sucess: false,
+          success: false,
         });
       }
       const user: UserI | null = await User.findOne({
@@ -290,14 +290,14 @@ export default class UserService {
       if (!user) {
         return (response = {
           message: 'Usuário não encontrado!',
-          sucess: false,
+          success: false,
         });
       } else {
         const userNameSplits: string[] = user.fullName.split(' ');
         user.fullName = userNameSplits[0] + ' ' + userNameSplits[userNameSplits.length - 1];
         return (response = {
           message: 'Usuário encontrado!',
-          sucess: true,
+          success: true,
           data: user,
         });
       }
@@ -305,7 +305,7 @@ export default class UserService {
       console.log(err);
       let response: ResponseI = {
         message: 'Erro ao buscar informações do usuário, consulte o Log.',
-        sucess: false,
+        success: false,
       };
       return response;
     }

@@ -3,7 +3,6 @@ import { RolesEnum } from '../enums/roles.enum';
 export interface ProjectCreateI {
   name: string;
   description?: string;
-  bannerFile?: File;
   deadline?: string;
   members?: ProjectMemberI[];
 }
