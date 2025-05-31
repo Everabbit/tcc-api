@@ -7,6 +7,7 @@ import streamifier from 'streamifier';
 import { ProjectMemberI } from '../interfaces/project.interface';
 import { ProjectParticipation, ProjectParticipationI } from '../models/project_participation.model';
 import { ProjectStatus } from '../enums/project_status.enum';
+import { User } from '../models/user.model';
 
 export default class ProjectService {
   //crud dos projetos
@@ -76,6 +77,11 @@ export default class ProjectService {
           {
             model: ProjectParticipation,
             where: { userId: userId },
+            include: [
+              {
+                model: User,
+              },
+            ],
           },
         ],
       });
