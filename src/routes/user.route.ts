@@ -11,5 +11,6 @@ export default class UserRoute {
     app.route('/users/validateToken').get(this.controller.validateToken);
     app.route('/users/login').post(this.controller.login);
     app.route('/users/basicinfo').get(this.middleware.validateToken, this.controller.getBasicInfoUser);
+    app.route('/users/basicinfolist').get(this.middleware.validateToken, this.controller.getBasicUserList);
   }
 }

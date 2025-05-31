@@ -8,7 +8,9 @@ export interface ProjectCreateI {
 }
 
 export interface ProjectMemberI {
-  name?: string;
-  email?: string;
+  id?: number;
+  username?: string;
+  image?: string;
+  initials?: string;
   role?: RolesEnum;
 }

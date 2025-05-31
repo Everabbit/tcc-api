@@ -4,7 +4,7 @@ import ResponseValidator from '../utils/reponse.utils';
 import { HttpStatus } from '../enums/res_status.enum';
 import ProjectService from '../services/projects.service';
 import { ProjectI } from '../models/project.model';
-import { ProjectCreateI } from '../interfaces/project.interface';
+import { ProjectCreateI, ProjectMemberI } from '../interfaces/project.interface';
 import { ProjectStatus } from '../enums/project_status.enum';
 
 export default class ProjectController {
@@ -33,8 +33,6 @@ export default class ProjectController {
         bannerUploadUrl = banner.path;
       }
 
-      console.log(bannerUploadUrl);
-
       const newProject: ProjectI = {
         creatorId: userId,
         name: project.name,
@@ -44,8 +42,6 @@ export default class ProjectController {
         deadline: project.deadline ? new Date(project.deadline) : undefined,
         progress: 0,
       };
-
-      console.log(newProject);
 
       const projectCreated: ResponseI = await ProjectService.create(newProject);
 
@@ -57,10 +53,74 @@ export default class ProjectController {
         return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
       }
 
+      //adicionar usuário principal
+      const admin: ProjectMemberI = {
+        id: userId,
+        role: 1,
+      };
+      const adminAdded: ResponseI = await ProjectService.addUserOnProject(projectCreated.data.id, admin);
+      if (!adminAdded.success) {
+        response = {
+          message: adminAdded.message,
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
+      }
+
+      //adicionar outros usuários
+      if (project.members) {
+        project.members.forEach(async element => {
+          const user: ResponseI = await ProjectService.addUserOnProject(projectCreated.data.id, element);
+        });
+      }
+
       response = {
         message: 'Projeto criado com sucesso!',
         success: true,
         data: projectCreated.data,
+      };
+      return ResponseValidator.response(req, res, HttpStatus.OK, response);
+    } catch (err) {
+      console.log(err);
+      const response: ResponseI = {
+        message: `Erro: ${err}`,
+        success: false,
+      };
+      return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
+    }
+  }
+
+  public async getProjects(req: Request, res: Response) {
+    try {
+      let response: ResponseI = {
+        message: '',
+        success: false,
+      };
+
+      const userId: number = parseInt(req.params.userId);
+
+      if (!userId) {
+        response = {
+          message: 'Id do usuário não informado!',
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.BAD_REQUEST, response);
+      }
+
+      const projects: ResponseI = await ProjectService.list(userId);
+
+      if (!projects.success) {
+        response = {
+          message: projects.message,
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.NOT_FOUND, response);
+      }
+
+      response = {
+        message: 'Projetos encontrados!',
+        success: true,
+        data: projects.data,
       };
       return ResponseValidator.response(req, res, HttpStatus.OK, response);
     } catch (err) {

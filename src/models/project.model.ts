@@ -1,6 +1,17 @@
-import { AllowNull, AutoIncrement, Column, DataType, ForeignKey, Model, PrimaryKey, Table } from 'sequelize-typescript';
+import {
+  AllowNull,
+  AutoIncrement,
+  Column,
+  DataType,
+  ForeignKey,
+  HasMany,
+  Model,
+  PrimaryKey,
+  Table,
+} from 'sequelize-typescript';
 import { ProjectStatus } from '../enums/project_status.enum';
 import { User } from './user.model';
+import { ProjectParticipation, ProjectParticipationI } from './project_participation.model';
 
 export interface ProjectI {
   id?: number;
@@ -11,6 +22,7 @@ export interface ProjectI {
   banner?: string;
   deadline?: Date | null;
   progress: number;
+  participation?: ProjectParticipationI[];
 }
 
 @Table({
@@ -52,4 +64,7 @@ export class Project extends Model implements ProjectI {
   @AllowNull(false)
   @Column({ type: DataType.INTEGER })
   progress!: number;
+
+  @HasMany(() => ProjectParticipation)
+  participation?: ProjectParticipationI[];
 }

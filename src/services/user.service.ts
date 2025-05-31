@@ -1,3 +1,4 @@
+import { Op } from 'sequelize';
 import { ResponseI } from '../interfaces/response.interface';
 import { User, UserI } from '../models/user.model';
 const bcrypt = require('bcrypt');
@@ -23,11 +24,22 @@ export default class UserService {
         });
       }
 
-      const userExists: UserI[] = await User.findAll({ where: { email: user.email } });
+      const existingUsers: UserI[] = await User.findAll({
+        where: {
+          [Op.or]: [
+            {
+              email: user.email,
+            },
+            {
+              username: user.username,
+            },
+          ],
+        },
+      });
 
-      if (userExists.length > 0) {
+      if (existingUsers.length > 0) {
         return (response = {
-          message: 'Este email já foi cadastrado.',
+          message: 'Este email ou nome de usuário já foi cadastrado.',
           success: false,
         });
       }
@@ -40,6 +52,7 @@ export default class UserService {
         email: user.email,
         password: user.password,
         fullName: user.fullName,
+        username: user.username,
         lastAcess: lastAcess,
       })
         .then(e => {
@@ -83,7 +96,18 @@ export default class UserService {
         });
       }
 
-      const userExists: UserI | null = await User.findOne({ where: { email: user.email } });
+      const userExists: UserI | null = await User.findOne({
+        where: {
+          [Op.or]: [
+            {
+              email: user.email,
+            },
+            {
+              username: user.email,
+            },
+          ],
+        },
+      });
 
       if (!userExists) {
         return (response = {
@@ -305,6 +329,39 @@ export default class UserService {
       console.log(err);
       let response: ResponseI = {
         message: 'Erro ao buscar informações do usuário, consulte o Log.',
+        success: false,
+      };
+      return response;
+    }
+  }
+
+  public static async getUsersBasicList(): Promise<ResponseI> {
+    try {
+      let response: ResponseI = {
+        message: '',
+        success: false,
+      };
+
+      const users: UserI[] = await User.findAll({
+        attributes: ['id', 'username', 'image'],
+      });
+
+      if (!users) {
+        return (response = {
+          message: 'Usuário não encontrado!',
+          success: false,
+        });
+      } else {
+        return (response = {
+          message: 'Usuário encontrado!',
+          success: true,
+          data: users,
+        });
+      }
+    } catch (err) {
+      console.log(err);
+      let response: ResponseI = {
+        message: 'Erro ao buscar usuários, consulte o Log.',
         success: false,
       };
       return response;

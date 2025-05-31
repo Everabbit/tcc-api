@@ -18,8 +18,9 @@ export default class UserController {
       user.email = fromBase64(user.email);
       user.password = fromBase64(user.password);
       user.fullName = fromBase64(user.fullName);
+      if (user.username) user.username = fromBase64(user.username);
 
-      if (!user || !user.email || !user.password || !user.fullName) {
+      if (!user || !user.email || !user.password || !user.fullName || !user.username) {
         response = {
           message: 'Informações incompletas!',
           success: false,
@@ -181,6 +182,40 @@ export default class UserController {
       }
 
       const user: ResponseI = await UserService.getBasicUserInfo(userId);
+
+      if (!user.success) {
+        response = {
+          message: user.message,
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.NOT_FOUND, response);
+      }
+
+      response = {
+        message: 'Usuário encontrado!',
+        success: true,
+        data: user.data,
+      };
+      return ResponseValidator.response(req, res, HttpStatus.OK, response);
+    } catch (err) {
+      console.log(err);
+      const response: ResponseI = {
+        message: `Erro: ${err}`,
+        success: false,
+        data: false,
+      };
+      return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
+    }
+  }
+
+  public async getBasicUserList(req: Request, res: Response) {
+    try {
+      let response: ResponseI = {
+        message: '',
+        success: false,
+      };
+
+      const user: ResponseI = await UserService.getUsersBasicList();
 
       if (!user.success) {
         response = {
