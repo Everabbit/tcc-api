@@ -132,4 +132,56 @@ export default class ProjectController {
       return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
     }
   }
+
+  public async getProject(req: Request, res: Response) {
+    try {
+      let response: ResponseI = {
+        message: '',
+        success: false,
+      };
+
+      const projectId: number = parseInt(req.params.projectId);
+      const userId: number = parseInt(req.params.userId);
+
+      if (!projectId) {
+        response = {
+          message: 'Id do projeto não informado!',
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.BAD_REQUEST, response);
+      }
+
+      if (!userId) {
+        response = {
+          message: 'Id do usuário não informado!',
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.BAD_REQUEST, response);
+      }
+
+      const project: ResponseI = await ProjectService.get(projectId, userId);
+
+      if (!project.success) {
+        response = {
+          message: project.message,
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.NOT_FOUND, response);
+      }
+
+      response = {
+        message: 'Projeto encontrado!',
+        success: true,
+        data: project.data,
+      };
+      return ResponseValidator.response(req, res, HttpStatus.OK, response);
+    } catch (err) {
+      console.log(err);
+      const response: ResponseI = {
+        message: `Erro: ${err}`,
+        success: false,
+      };
+      return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
+    }
+  }
 }

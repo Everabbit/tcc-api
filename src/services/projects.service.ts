@@ -8,6 +8,7 @@ import { ProjectMemberI } from '../interfaces/project.interface';
 import { ProjectParticipation, ProjectParticipationI } from '../models/project_participation.model';
 import { ProjectStatus } from '../enums/project_status.enum';
 import { User } from '../models/user.model';
+import { Version } from '../models/version.model';
 
 export default class ProjectService {
   //crud dos projetos
@@ -65,6 +66,77 @@ export default class ProjectService {
       return response;
     }
   }
+
+  public static async get(projectId: number, userId: number): Promise<ResponseI> {
+    try {
+      let response: ResponseI = {
+        message: '',
+        success: false,
+      };
+
+      if (!projectId) {
+        response = {
+          message: 'Id do projeto não informado.',
+          success: false,
+        };
+        return response;
+      }
+
+      const project: ProjectI | null = await Project.findOne({
+        where: { id: projectId },
+        include: [
+          {
+            model: ProjectParticipation,
+            include: [
+              {
+                model: User,
+                attributes: ['id', 'fullName', 'username', 'image'],
+              },
+            ],
+          },
+          {
+            model: Version,
+          },
+        ],
+      });
+
+      if (!project) {
+        response = {
+          message: 'Projeto não encontrado.',
+          success: false,
+        };
+        return response;
+      }
+
+      const isCreator = project.creatorId === userId;
+      const isParticipant = project.participation?.some(
+        (participation: ProjectParticipationI) => participation.userId === userId
+      );
+
+      if (!isCreator && !isParticipant) {
+        response = {
+          message: 'Você não tem permissão para acessar este projeto.',
+          success: false,
+        };
+        return response;
+      }
+
+      response = {
+        message: 'Projeto encontrado com sucesso.',
+        success: true,
+        data: project,
+      };
+      return response;
+    } catch (err) {
+      console.log(err);
+      let response: ResponseI = {
+        message: 'Erro ao buscar projeto, consulte o Log.',
+        success: false,
+      };
+      return response;
+    }
+  }
+
   public static async list(userId: number): Promise<ResponseI> {
     try {
       let response: ResponseI = {
@@ -76,10 +148,10 @@ export default class ProjectService {
         include: [
           {
             model: ProjectParticipation,
-            where: { userId: userId },
             include: [
               {
                 model: User,
+                attributes: ['id', 'username', 'image'],
               },
             ],
           },
@@ -89,6 +161,23 @@ export default class ProjectService {
       if (!projects) {
         response = {
           message: 'Nenhum projeto encontrado.',
+          success: false,
+        };
+        return response;
+      }
+
+      //verificar se usuário é criador ou participante, se não remover o projeto
+      const filteredProjects = projects.filter(project => {
+        const isCreator = project.creatorId === userId;
+        const isParticipant = project.participation?.some(
+          (participation: ProjectParticipationI) => participation.userId === userId
+        );
+        return isCreator || isParticipant;
+      });
+
+      if (filteredProjects.length === 0) {
+        response = {
+          message: 'Nenhum projeto encontrado para este usuário.',
           success: false,
         };
         return response;

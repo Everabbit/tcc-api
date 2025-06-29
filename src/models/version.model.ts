@@ -15,7 +15,7 @@ import { Project, ProjectI } from './project.model';
 export interface VersionI {
   id?: number;
   projectId: number;
-  project: ProjectI;
+  project?: ProjectI;
   name: string;
   description?: string;
   status: VersionStatusEnum;

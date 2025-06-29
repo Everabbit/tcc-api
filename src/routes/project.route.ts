@@ -13,5 +13,6 @@ export default class ProjectRoute {
       .post(this.middleware.validateToken, upload.single('banner'), this.controller.createProject);
 
     app.route('/projects/list').get(this.middleware.validateToken, this.controller.getProjects);
+    app.route('/projects/:projectId').get(this.middleware.validateToken, this.controller.getProject);
   }
 }

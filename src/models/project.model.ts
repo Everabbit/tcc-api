@@ -12,6 +12,7 @@ import {
 import { ProjectStatus } from '../enums/project_status.enum';
 import { User } from './user.model';
 import { ProjectParticipation, ProjectParticipationI } from './project_participation.model';
+import { Version, VersionI } from './version.model';
 
 export interface ProjectI {
   id?: number;
@@ -23,6 +24,9 @@ export interface ProjectI {
   deadline?: Date | null;
   progress: number;
   participation?: ProjectParticipationI[];
+  createdAt?: Date;
+  updatedAt?: Date;
+  versions?: VersionI[];
 }
 
 @Table({
@@ -67,4 +71,7 @@ export class Project extends Model implements ProjectI {
 
   @HasMany(() => ProjectParticipation)
   participation?: ProjectParticipationI[];
+
+  @HasMany(() => Version)
+  versions?: VersionI[];
 }
