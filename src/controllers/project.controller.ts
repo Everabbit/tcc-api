@@ -184,4 +184,99 @@ export default class ProjectController {
       return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
     }
   }
+
+  public async addUsersOnProject(req: Request, res: Response) {
+    try {
+      let response: ResponseI = {
+        message: '',
+        success: false,
+      };
+
+      const projectId: number = parseInt(req.params.projectId);
+      const projectMembers: ProjectMemberI[] = JSON.parse(req.body.members);
+
+      if (!projectId) {
+        response = {
+          message: 'Id do projeto não informado!',
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.BAD_REQUEST, response);
+      }
+
+      if (!projectMembers || projectMembers.length === 0) {
+        response = {
+          message: 'Membros do projeto não informados!',
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.BAD_REQUEST, response);
+      }
+
+      for (const member of projectMembers) {
+        const addMemberResponse: ResponseI = await ProjectService.addUserOnProject(projectId, member);
+        if (!addMemberResponse.success) {
+          response = {
+            message: `Erro ao adicionar membro ${member.id}: ${addMemberResponse.message}`,
+            success: false,
+          };
+          return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
+        }
+      }
+
+      response = {
+        message: 'Membros adicionados ao projeto com sucesso!',
+        success: true,
+      };
+      return ResponseValidator.response(req, res, HttpStatus.OK, response);
+    } catch (err) {
+      console.log(err);
+      const response: ResponseI = {
+        message: `Erro: ${err}`,
+        success: false,
+      };
+      return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
+    }
+  }
+
+  public async removeUserFromProject(req: Request, res: Response) {
+    try {
+      let response: ResponseI = {
+        message: '',
+        success: false,
+      };
+
+      const projectId: number = parseInt(req.params.projectId);
+      const userId: number = parseInt(req.params.participationId);
+
+      if (!projectId || !userId) {
+        response = {
+          message: 'Dados incompletos para remover membro do projeto.',
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.BAD_REQUEST, response);
+      }
+
+      const removeMemberResponse: ResponseI = await ProjectService.removeUserFromProject(projectId, userId);
+
+      if (!removeMemberResponse.success) {
+        response = {
+          message: removeMemberResponse.message,
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
+      }
+
+      response = {
+        message: 'Membro removido do projeto com sucesso!',
+        success: true,
+      };
+      return ResponseValidator.response(req, res, HttpStatus.OK, response);
+    } catch (err) {
+      console.log(err);
+      const response: ResponseI = {
+        message: `Erro: ${err}`,
+        success: false,
+      };
+      return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
+    }
+  }
 }

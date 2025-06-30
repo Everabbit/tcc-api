@@ -186,7 +186,7 @@ export default class ProjectService {
       response = {
         message: 'Projetos encontrados com sucesso.',
         success: true,
-        data: projects,
+        data: filteredProjects,
       };
       return response;
     } catch (err) {
@@ -206,7 +206,7 @@ export default class ProjectService {
         success: false,
       };
 
-      if (!projectId || !projectMember || !projectMember.id || !projectMember.role) {
+      if (!projectId || !projectMember || !projectMember.id || typeof projectMember.role !== 'number') {
         response = {
           message: 'Dados incompletos para adicionar membro ao projeto.',
           success: false,
@@ -252,6 +252,49 @@ export default class ProjectService {
       console.log(err);
       let response: ResponseI = {
         message: 'Erro ao adicionar usuário ao projeto, consulte o Log.',
+        success: false,
+      };
+      return response;
+    }
+  }
+
+  public static async removeUserFromProject(projectId: number, userId: number): Promise<ResponseI> {
+    try {
+      let response: ResponseI = {
+        message: '',
+        success: false,
+      };
+
+      if (!projectId || !userId) {
+        response = {
+          message: 'Dados incompletos para remover membro do projeto.',
+          success: false,
+        };
+        return response;
+      }
+
+      const projectMember: number | null = await ProjectParticipation.destroy({
+        where: { userId: userId, projectId: projectId },
+      });
+
+      if (!projectMember) {
+        response = {
+          message: 'Usuário não encontrado neste projeto.',
+          success: false,
+        };
+        return response;
+      }
+
+      response = {
+        message: 'Membro removido do projeto com sucesso.',
+        success: true,
+      };
+
+      return response;
+    } catch (err) {
+      console.log(err);
+      let response: ResponseI = {
+        message: 'Erro ao remover usuário do projeto, consulte o Log.',
         success: false,
       };
       return response;
