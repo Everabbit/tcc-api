@@ -67,6 +67,120 @@ export default class ProjectService {
     }
   }
 
+  public static async update(project: ProjectI): Promise<ResponseI> {
+    try {
+      let response: ResponseI = {
+        message: '',
+        success: false,
+      };
+
+      if (!project || !project.id) {
+        response = {
+          message: 'Projeto inválido, verifique os dados.',
+          success: false,
+        };
+        return response;
+      }
+
+      const projectExists = await Project.findOne({ where: { id: project.id } });
+      if (!projectExists) {
+        response = {
+          message: 'Projeto não encontrado.',
+          success: false,
+        };
+        return response;
+      }
+
+      const [rowsAffected, [updatedProject]] = await Project.update(
+        {
+          name: project.name,
+          description: project.description,
+          status: project.status,
+          banner: project.banner,
+          deadline: project.deadline,
+          progress: project.progress,
+        },
+        { where: { id: project.id }, returning: true }
+      );
+
+      if (rowsAffected === 0) {
+        response = {
+          message: 'Nenhum projeto foi atualizado.',
+          success: false,
+        };
+        return response;
+      }
+
+      response = {
+        message: 'Projeto atualizado com sucesso.',
+        success: true,
+        data: updatedProject,
+      };
+      return response;
+    } catch (err) {
+      console.log(err);
+      let response: ResponseI = {
+        message: 'Erro ao atualizar projeto, consulte o Log.',
+        success: false,
+      };
+      return response;
+    }
+  }
+
+  public static async remove(projectId: number, userId: number): Promise<ResponseI> {
+    try {
+      let response: ResponseI = {
+        message: '',
+        success: false,
+      };
+
+      if (!projectId) {
+        response = {
+          message: 'Id do projeto não informado.',
+          success: false,
+        };
+        return response;
+      }
+
+      const projectExists = await Project.findOne({ where: { id: projectId, creatorId: userId } });
+      if (!projectExists) {
+        response = {
+          message: 'Projeto não encontrado.',
+          success: false,
+        };
+        return response;
+      }
+
+      await ProjectParticipation.destroy({ where: { projectId: projectExists.id } });
+      await Version.destroy({ where: { projectId: projectExists.id } });
+
+      const deletedRows = await Project.destroy({
+        where: { id: projectExists.id },
+      });
+
+      if (deletedRows === 0) {
+        response = {
+          message: 'Nenhum projeto foi removido.',
+          success: false,
+        };
+        return response;
+      }
+
+      response = {
+        message: 'Projeto removido com sucesso.',
+        success: true,
+      };
+      return response;
+    } catch (err) {
+      console.log(err);
+      let response: ResponseI = {
+        message: 'Erro ao remover projeto, consulte o Log.',
+        success: false,
+      };
+      return response;
+    }
+  }
+
   public static async get(projectId: number, userId: number): Promise<ResponseI> {
     try {
       let response: ResponseI = {

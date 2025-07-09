@@ -90,6 +90,111 @@ export default class ProjectController {
     }
   }
 
+  public async updateProject(req: Request, res: Response) {
+    try {
+      let response: ResponseI = {
+        message: '',
+        success: false,
+      };
+
+      const projectId: number = parseInt(req.params.projectId);
+      const project: ProjectI = JSON.parse(req.body.project);
+      const banner: Express.Multer.File | undefined = req.file;
+
+      if (!projectId) {
+        response = {
+          message: 'Id do projeto não informado!',
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.BAD_REQUEST, response);
+      }
+
+      let bannerUploadUrl: string | undefined = project.banner;
+
+      if (banner) {
+        bannerUploadUrl = banner.path;
+      }
+
+      const updatedProject: ProjectI = {
+        id: projectId,
+        creatorId: project.creatorId,
+        name: project.name,
+        description: project.description,
+        status: project.status,
+        banner: bannerUploadUrl,
+        deadline: project.deadline ? new Date(project.deadline) : undefined,
+        progress: project.progress,
+      };
+
+      const projectUpdated: ResponseI = await ProjectService.update(updatedProject);
+
+      if (!projectUpdated.success) {
+        response = {
+          message: projectUpdated.message,
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
+      }
+
+      response = {
+        message: 'Projeto atualizado com sucesso!',
+        success: true,
+        data: projectUpdated.data,
+      };
+      return ResponseValidator.response(req, res, HttpStatus.OK, response);
+    } catch (err) {
+      console.log(err);
+      const response: ResponseI = {
+        message: `Erro: ${err}`,
+        success: false,
+      };
+      return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
+    }
+  }
+
+  public async removeProject(req: Request, res: Response) {
+    try {
+      let response: ResponseI = {
+        message: '',
+        success: false,
+      };
+
+      const userId: number = parseInt(req.params.userId);
+      const projectId: number = parseInt(req.params.projectId);
+
+      if (!projectId) {
+        response = {
+          message: 'Id do projeto não informado!',
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.BAD_REQUEST, response);
+      }
+
+      const projectRemoved: ResponseI = await ProjectService.remove(projectId, userId);
+
+      if (!projectRemoved.success) {
+        response = {
+          message: projectRemoved.message,
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
+      }
+
+      response = {
+        message: 'Projeto removido com sucesso!',
+        success: true,
+      };
+      return ResponseValidator.response(req, res, HttpStatus.OK, response);
+    } catch (err) {
+      console.log(err);
+      const response: ResponseI = {
+        message: `Erro: ${err}`,
+        success: false,
+      };
+      return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
+    }
+  }
+
   public async getProjects(req: Request, res: Response) {
     try {
       let response: ResponseI = {
