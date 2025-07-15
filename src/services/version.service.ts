@@ -56,6 +56,65 @@ export default class VersionService {
     }
   }
 
+  public static async update(version: VersionI): Promise<ResponseI> {
+    try {
+      let response: ResponseI = {
+        message: '',
+        success: false,
+      };
+
+      if (!version || !version.id) {
+        response = {
+          message: 'Versão inválida, verifique os dados.',
+          success: false,
+        };
+        return response;
+      }
+
+      const versionExists = await Version.findOne({ where: { id: version.id } });
+      if (!versionExists) {
+        response = {
+          message: 'Versão não encontrada.',
+          success: false,
+        };
+        return response;
+      }
+
+      const [rowsAffected, [updatedVersion]] = await Version.update(
+        {
+          name: version.name,
+          description: version.description,
+          status: version.status,
+          startDate: version.startDate,
+          endDate: version.endDate,
+        },
+        { where: { id: version.id }, returning: true }
+      );
+
+      if (rowsAffected === 0) {
+        response = {
+          message: 'Nenhuma versão foi atualizada.',
+          success: false,
+        };
+        return response;
+      }
+
+      response = {
+        message: 'Versão atualizada com sucesso.',
+        success: true,
+        data: updatedVersion,
+      };
+      return response;
+    } catch (err) {
+      console.log(err);
+      let response: ResponseI = {
+        message: 'Erro ao atualizar versão, consulte o Log.',
+        success: false,
+      };
+      return response;
+    }
+  }
+
   public static async getAll(projectId: number): Promise<ResponseI> {
     try {
       let response: ResponseI = {
@@ -93,6 +152,49 @@ export default class VersionService {
       console.log(err);
       let response: ResponseI = {
         message: 'Erro ao buscar versões, consulte o Log.',
+        success: false,
+      };
+      return response;
+    }
+  }
+
+  public static async get(projectId: number, versionId: number): Promise<ResponseI> {
+    try {
+      let response: ResponseI = {
+        message: '',
+        success: false,
+      };
+
+      if (!projectId || !versionId) {
+        response = {
+          message: 'Id do projeto ou da versão não informado.',
+          success: false,
+        };
+        return response;
+      }
+
+      const version: VersionI | null = await Version.findOne({
+        where: { id: versionId, projectId: projectId },
+      });
+
+      if (!version) {
+        response = {
+          message: 'Versão não encontrada.',
+          success: false,
+        };
+        return response;
+      }
+
+      response = {
+        message: 'Versão encontrada com sucesso.',
+        success: true,
+        data: version,
+      };
+      return response;
+    } catch (err) {
+      console.log(err);
+      let response: ResponseI = {
+        message: 'Erro ao buscar versão, consulte o Log.',
         success: false,
       };
       return response;

@@ -60,6 +60,60 @@ export default class VersionController {
     }
   }
 
+  public async updateVersion(req: Request, res: Response) {
+    try {
+      let response: ResponseI = {
+        message: '',
+        success: false,
+      };
+
+      const versionId: number = parseInt(req.params.versionId);
+      const version: VersionCreateI = JSON.parse(req.body.version);
+
+      if (!versionId) {
+        response = {
+          message: 'Id da versão não informado!',
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.BAD_REQUEST, response);
+      }
+
+      const updatedVersion: VersionI = {
+        id: versionId,
+        name: version.name,
+        description: version.description,
+        status: version.status,
+        startDate: version.startDate ? new Date(version.startDate) : new Date(),
+        endDate: version.endDate ? new Date(version.endDate) : undefined,
+        projectId: version.projectId,
+      };
+
+      const versionUpdated: ResponseI = await VersionService.update(updatedVersion);
+
+      if (!versionUpdated.success) {
+        response = {
+          message: versionUpdated.message,
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
+      }
+
+      response = {
+        message: 'Versão atualizada com sucesso!',
+        success: true,
+        data: versionUpdated.data,
+      };
+      return ResponseValidator.response(req, res, HttpStatus.OK, response);
+    } catch (err) {
+      console.log(err);
+      const response: ResponseI = {
+        message: `Erro: ${err}`,
+        success: false,
+      };
+      return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
+    }
+  }
+
   public async getAllVersions(req: Request, res: Response) {
     try {
       let response: ResponseI = {
@@ -91,6 +145,50 @@ export default class VersionController {
         message: 'Versões encontradas!',
         success: true,
         data: versions.data,
+      };
+      return ResponseValidator.response(req, res, HttpStatus.OK, response);
+    } catch (err) {
+      console.log(err);
+      const response: ResponseI = {
+        message: `Erro: ${err}`,
+        success: false,
+      };
+      return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
+    }
+  }
+
+  public async getOneVersion(req: Request, res: Response) {
+    try {
+      let response: ResponseI = {
+        message: '',
+        success: false,
+      };
+
+      const projectId: number = parseInt(req.params.projectId);
+      const versionId: number = parseInt(req.params.versionId);
+
+      if (!projectId || !versionId) {
+        response = {
+          message: 'Id do projeto ou da versão não informado!',
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.BAD_REQUEST, response);
+      }
+
+      const version: ResponseI = await VersionService.get(projectId, versionId);
+
+      if (!version.success) {
+        response = {
+          message: version.message,
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.NOT_FOUND, response);
+      }
+
+      response = {
+        message: 'Versão encontrada!',
+        success: true,
+        data: version.data,
       };
       return ResponseValidator.response(req, res, HttpStatus.OK, response);
     } catch (err) {
