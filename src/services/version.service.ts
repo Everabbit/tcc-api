@@ -55,4 +55,47 @@ export default class VersionService {
       return response;
     }
   }
+
+  public static async getAll(projectId: number): Promise<ResponseI> {
+    try {
+      let response: ResponseI = {
+        message: '',
+        success: false,
+      };
+
+      if (!projectId) {
+        response = {
+          message: 'Id do projeto não informado.',
+          success: false,
+        };
+        return response;
+      }
+
+      const versions: VersionI[] = await Version.findAll({
+        where: { projectId: projectId },
+      });
+
+      if (!versions) {
+        response = {
+          message: 'Nenhuma versão encontrada.',
+          success: false,
+        };
+        return response;
+      }
+
+      response = {
+        message: 'Versões encontradas com sucesso.',
+        success: true,
+        data: versions,
+      };
+      return response;
+    } catch (err) {
+      console.log(err);
+      let response: ResponseI = {
+        message: 'Erro ao buscar versões, consulte o Log.',
+        success: false,
+      };
+      return response;
+    }
+  }
 }

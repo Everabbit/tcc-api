@@ -59,4 +59,47 @@ export default class VersionController {
       return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
     }
   }
+
+  public async getAllVersions(req: Request, res: Response) {
+    try {
+      let response: ResponseI = {
+        message: '',
+        success: false,
+      };
+
+      const projectId: number = parseInt(req.params.projectId);
+
+      if (!projectId) {
+        response = {
+          message: 'Id do projeto não informado!',
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.BAD_REQUEST, response);
+      }
+
+      const versions: ResponseI = await VersionService.getAll(projectId);
+
+      if (!versions.success) {
+        response = {
+          message: versions.message,
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.NOT_FOUND, response);
+      }
+
+      response = {
+        message: 'Versões encontradas!',
+        success: true,
+        data: versions.data,
+      };
+      return ResponseValidator.response(req, res, HttpStatus.OK, response);
+    } catch (err) {
+      console.log(err);
+      const response: ResponseI = {
+        message: `Erro: ${err}`,
+        success: false,
+      };
+      return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
+    }
+  }
 }

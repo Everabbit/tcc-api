@@ -50,7 +50,7 @@ export class Project extends Model implements ProjectI {
   name!: string;
 
   @AllowNull(true)
-  @Column({ type: DataType.STRING })
+  @Column({ type: DataType.TEXT })
   description?: string | undefined;
 
   @AllowNull(false)
@@ -58,7 +58,7 @@ export class Project extends Model implements ProjectI {
   status!: ProjectStatus;
 
   @AllowNull(true)
-  @Column({ type: DataType.STRING })
+  @Column({ type: DataType.TEXT })
   banner?: string | undefined;
 
   @AllowNull(true)

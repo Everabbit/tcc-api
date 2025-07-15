@@ -44,11 +44,11 @@ export class Version extends Model implements VersionI {
   project!: Project;
 
   @AllowNull(false)
-  @Column({ type: DataType.STRING })
+  @Column({ type: DataType.TEXT })
   name!: string;
 
   @AllowNull(true)
-  @Column({ type: DataType.STRING })
+  @Column({ type: DataType.TEXT })
   description?: string;
 
   @AllowNull(false)

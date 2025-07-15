@@ -8,5 +8,6 @@ export default class VersionRoute {
 
   public createInstances(app: Application) {
     app.route('/versions/create').post(this.middleware.validateToken, this.controller.createVersion);
+    app.route('/versions/list/:projectId').get(this.middleware.validateToken, this.controller.getAllVersions);
   }
 }

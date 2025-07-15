@@ -66,7 +66,7 @@ export class Task extends Model implements TaskI {
   parentTask?: TaskI;
 
   @AllowNull(false)
-  @Column(DataType.STRING)
+  @Column(DataType.TEXT)
   title!: string;
 
   @AllowNull(false)
