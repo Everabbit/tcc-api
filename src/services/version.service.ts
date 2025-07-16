@@ -115,6 +115,57 @@ export default class VersionService {
     }
   }
 
+  public static async delete(versionId: number): Promise<ResponseI> {
+    try {
+      let response: ResponseI = {
+        message: '',
+        success: false,
+      };
+
+      if (!versionId) {
+        response = {
+          message: 'Id da versão não informado.',
+          success: false,
+        };
+        return response;
+      }
+
+      const versionExists = await Version.findOne({ where: { id: versionId } });
+      if (!versionExists) {
+        response = {
+          message: 'Versão não encontrada.',
+          success: false,
+        };
+        return response;
+      }
+
+      const deletedRows = await Version.destroy({
+        where: { id: versionId },
+      });
+
+      if (deletedRows === 0) {
+        response = {
+          message: 'Nenhuma versão foi removida.',
+          success: false,
+        };
+        return response;
+      }
+
+      response = {
+        message: 'Versão removida com sucesso.',
+        success: true,
+      };
+      return response;
+    } catch (err) {
+      console.log(err);
+      let response: ResponseI = {
+        message: 'Erro ao remover versão, consulte o Log.',
+        success: false,
+      };
+      return response;
+    }
+  }
+
   public static async getAll(projectId: number): Promise<ResponseI> {
     try {
       let response: ResponseI = {

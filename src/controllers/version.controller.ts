@@ -114,6 +114,48 @@ export default class VersionController {
     }
   }
 
+  public async removeVersion(req: Request, res: Response) {
+    try {
+      let response: ResponseI = {
+        message: '',
+        success: false,
+      };
+
+      const versionId: number = parseInt(req.params.versionId);
+
+      if (!versionId) {
+        response = {
+          message: 'Id da versão não informado!',
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.BAD_REQUEST, response);
+      }
+
+      const versionRemoved: ResponseI = await VersionService.delete(versionId);
+
+      if (!versionRemoved.success) {
+        response = {
+          message: versionRemoved.message,
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
+      }
+
+      response = {
+        message: 'Versão removida com sucesso!',
+        success: true,
+      };
+      return ResponseValidator.response(req, res, HttpStatus.OK, response);
+    } catch (err) {
+      console.log(err);
+      const response: ResponseI = {
+        message: `Erro: ${err}`,
+        success: false,
+      };
+      return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
+    }
+  }
+
   public async getAllVersions(req: Request, res: Response) {
     try {
       let response: ResponseI = {
