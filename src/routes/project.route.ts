@@ -22,5 +22,8 @@ export default class ProjectRoute {
     app
       .route('/projects/removeuser/:projectId/:participationId')
       .delete(this.middleware.validateToken, this.controller.removeUserFromProject);
+    app.route('/projects/createtag').post(this.middleware.validateToken, this.controller.createTag);
+    app.route('/projects/updatetag').put(this.middleware.validateToken, this.controller.updateTag);
+    app.route('/projects/deletetag/:tagId').delete(this.middleware.validateToken, this.controller.deleteTag);
   }
 }
