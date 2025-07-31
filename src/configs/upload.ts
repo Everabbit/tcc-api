@@ -2,7 +2,7 @@ import { cloudinary } from './cloudinary';
 import { CloudinaryStorage } from 'multer-storage-cloudinary';
 import multer from 'multer';
 
-const storage = new CloudinaryStorage({
+const cloudinaryStorage = new CloudinaryStorage({
   cloudinary,
   params: async (req, file) => {
     return {
@@ -13,4 +13,10 @@ const storage = new CloudinaryStorage({
   },
 });
 
-export const upload = multer({ storage });
+const memoryStorage = multer.memoryStorage();
+
+// Uploader para banners de projeto (Cloudinary)
+export const uploadBanner = multer({ storage: cloudinaryStorage });
+
+// Uploader para anexos de tarefa (salvar localmente via service)
+export const uploadAttachment = multer({ storage: memoryStorage });

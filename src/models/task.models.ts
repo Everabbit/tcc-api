@@ -5,6 +5,7 @@ import {
   Column,
   DataType,
   ForeignKey,
+  HasMany,
   Model,
   PrimaryKey,
   Table,
@@ -13,6 +14,9 @@ import { TaskStatusEnum } from '../enums/status.enum';
 import { PriorityEnum } from '../enums/task_priority.enum';
 import { User, UserI } from './user.model';
 import { Version, VersionI } from './version.model';
+import { Attachment, AttachmentI } from './attachment.model';
+import { Comment, CommentI } from './comment.model';
+import TaskTag, { TaskTagI } from './task_tag.model';
 
 export interface TaskI {
   id?: number;
@@ -28,6 +32,11 @@ export interface TaskI {
   status: TaskStatusEnum;
   deadline?: Date;
   blockReason?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+  attachments?: AttachmentI[];
+  comments?: CommentI[];
+  tags?: TaskTagI[];
 }
 
 @Table({
@@ -81,11 +90,20 @@ export class Task extends Model implements TaskI {
   @Column(DataType.INTEGER)
   status!: TaskStatusEnum;
 
-  @AllowNull(false)
+  @AllowNull(true)
   @Column(DataType.DATE)
   deadline?: Date;
 
   @AllowNull(true)
   @Column(DataType.TEXT)
   blockReason?: string;
+
+  @HasMany(() => Attachment)
+  attachments?: AttachmentI[];
+
+  @HasMany(() => Comment)
+  comments?: CommentI[];
+
+  @HasMany(() => TaskTag)
+  tags?: TaskTagI[];
 }

@@ -21,3 +21,5 @@ dist/
 # Outros
 *.log
 *.tmp
+
+uploads/

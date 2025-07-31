@@ -1,0 +1,18 @@
+import { Application } from 'express';
+import TaskController from '../controllers/task.controller';
+import BasicMiddleware from '../middlewares/basic.middleware';
+import { uploadAttachment } from '../configs/upload';
+
+export default class TaskRoute {
+  private controller: TaskController = new TaskController();
+  private middleware: BasicMiddleware = new BasicMiddleware();
+
+  public createInstances(app: Application) {
+    app
+      .route('/tasks/create')
+      .post(this.middleware.validateToken, uploadAttachment.array('attachment'), this.controller.createTask);
+    app.route('/tasks/getall/:versionId').get(this.middleware.validateToken, this.controller.getAllTasks);
+    app.route('/tasks/updatestatus/:taskId').put(this.middleware.validateToken, this.controller.updateStatusTask);
+    app.route('/tasks/get/:taskId').get(this.middleware.validateToken, this.controller.getTask);
+  }
+}

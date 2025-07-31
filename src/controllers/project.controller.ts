@@ -385,122 +385,37 @@ export default class ProjectController {
     }
   }
 
-  public async createTag(req: Request, res: Response) {
+  public async listMembers(req: Request, res: Response) {
     try {
       let response: ResponseI = {
         message: '',
         success: false,
       };
 
-      const tag = req.body;
+      const projectId: number = parseInt(req.params.projectId);
 
-      if (!tag || !tag.name || !tag.projectId) {
+      if (!projectId) {
         response = {
-          message: 'Dados incompletos para criar tag.',
+          message: 'Id do projeto não informado!',
           success: false,
         };
         return ResponseValidator.response(req, res, HttpStatus.BAD_REQUEST, response);
       }
 
-      const tagCreated: ResponseI = await ProjectService.createTag(tag);
+      const members: ResponseI = await ProjectService.listMembers(projectId);
 
-      if (!tagCreated.success) {
+      if (!members.success) {
         response = {
-          message: tagCreated.message,
+          message: members.message,
           success: false,
         };
-        return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
+        return ResponseValidator.response(req, res, HttpStatus.NOT_FOUND, response);
       }
 
       response = {
-        message: 'Tag criada com sucesso!',
+        message: 'Membros encontrados!',
         success: true,
-        data: tagCreated.data,
-      };
-      return ResponseValidator.response(req, res, HttpStatus.OK, response);
-    } catch (err) {
-      console.log(err);
-      const response: ResponseI = {
-        message: `Erro: ${err}`,
-        success: false,
-      };
-      return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
-    }
-  }
-
-  public async updateTag(req: Request, res: Response) {
-    try {
-      let response: ResponseI = {
-        message: '',
-        success: false,
-      };
-
-      const tag = req.body;
-
-      if (!tag || !tag.id) {
-        response = {
-          message: 'Dados incompletos para atualizar tag.',
-          success: false,
-        };
-        return ResponseValidator.response(req, res, HttpStatus.BAD_REQUEST, response);
-      }
-
-      const tagUpdated: ResponseI = await ProjectService.updateTag(tag);
-
-      if (!tagUpdated.success) {
-        response = {
-          message: tagUpdated.message,
-          success: false,
-        };
-        return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
-      }
-
-      response = {
-        message: 'Tag atualizada com sucesso!',
-        success: true,
-        data: tagUpdated.data,
-      };
-      return ResponseValidator.response(req, res, HttpStatus.OK, response);
-    } catch (err) {
-      console.log(err);
-      const response: ResponseI = {
-        message: `Erro: ${err}`,
-        success: false,
-      };
-      return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
-    }
-  }
-
-  public async deleteTag(req: Request, res: Response) {
-    try {
-      let response: ResponseI = {
-        message: '',
-        success: false,
-      };
-
-      const tagId: number = parseInt(req.params.tagId);
-
-      if (!tagId) {
-        response = {
-          message: 'Id da tag não informado!',
-          success: false,
-        };
-        return ResponseValidator.response(req, res, HttpStatus.BAD_REQUEST, response);
-      }
-
-      const tagDeleted: ResponseI = await ProjectService.deleteTag(tagId);
-
-      if (!tagDeleted.success) {
-        response = {
-          message: tagDeleted.message,
-          success: false,
-        };
-        return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
-      }
-
-      response = {
-        message: 'Tag removida com sucesso!',
-        success: true,
+        data: members.data,
       };
       return ResponseValidator.response(req, res, HttpStatus.OK, response);
     } catch (err) {

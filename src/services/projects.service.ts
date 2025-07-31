@@ -419,158 +419,49 @@ export default class ProjectService {
     }
   }
 
-  public static async createTag(tag: TagI): Promise<ResponseI> {
-    try {
-      let response: ResponseI = {
-        message: '',
-        success: false,
-      };
-      if (!tag || !tag.name || !tag.projectId) {
-        response = {
-          message: 'Tag inválida, verifique os dados.',
-          success: false,
-        };
-        return response;
-      }
-
-      const tagExists = await Tag.findOne({ where: { name: tag.name, projectId: tag.projectId } });
-      if (tagExists) {
-        response = {
-          message: 'Já existe uma tag com este nome neste projeto.',
-          success: false,
-        };
-        return response;
-      }
-
-      const newTag = await Tag.create({
-        projectId: tag.projectId,
-        name: tag.name,
-        color: tag.color,
-      });
-      if (!newTag) {
-        response = {
-          message: 'Erro ao criar tag, consulte o Log.',
-          success: false,
-        };
-        return response;
-      }
-      response = {
-        message: 'Tag criada com sucesso.',
-        success: true,
-        data: newTag,
-      };
-      return response;
-    } catch (err) {
-      console.log(err);
-      let response: ResponseI = {
-        message: 'Erro ao criar tag, consulte o Log.',
-        success: false,
-      };
-      return response;
-    }
-  }
-
-  public static async updateTag(tag: TagI): Promise<ResponseI> {
+  public static async listMembers(projectId: number): Promise<ResponseI> {
     try {
       let response: ResponseI = {
         message: '',
         success: false,
       };
 
-      if (!tag || !tag.id) {
+      if (!projectId) {
         response = {
-          message: 'Tag inválida, verifique os dados.',
+          message: 'Id do projeto não informado.',
           success: false,
         };
         return response;
       }
 
-      const tagExists = await Tag.findOne({ where: { id: tag.id } });
-      if (!tagExists) {
-        response = {
-          message: 'Tag não encontrada.',
-          success: false,
-        };
-        return response;
-      }
-
-      const [rowsAffected, [updatedTag]] = await Tag.update(
-        {
-          name: tag.name,
-          color: tag.color,
-        },
-        { where: { id: tag.id }, returning: true }
-      );
-
-      if (rowsAffected === 0) {
-        response = {
-          message: 'Nenhuma tag foi atualizada.',
-          success: false,
-        };
-        return response;
-      }
-
-      response = {
-        message: 'Tag atualizada com sucesso.',
-        success: true,
-        data: updatedTag,
-      };
-      return response;
-    } catch (err) {
-      console.log(err);
-      let response: ResponseI = {
-        message: 'Erro ao atualizar tag, consulte o Log.',
-        success: false,
-      };
-      return response;
-    }
-  }
-
-  public static async deleteTag(tagId: number): Promise<ResponseI> {
-    try {
-      let response: ResponseI = {
-        message: '',
-        success: false,
-      };
-
-      if (!tagId) {
-        response = {
-          message: 'Id da tag não informado.',
-          success: false,
-        };
-        return response;
-      }
-
-      const tagExists = await Tag.findOne({ where: { id: tagId } });
-      if (!tagExists) {
-        response = {
-          message: 'Tag não encontrada.',
-          success: false,
-        };
-        return response;
-      }
-
-      const deletedRows = await Tag.destroy({
-        where: { id: tagId },
+      const members: ProjectParticipationI[] = await ProjectParticipation.findAll({
+        where: { projectId: projectId },
+        include: [
+          {
+            model: User,
+            attributes: ['id', 'fullName', 'username', 'image'],
+          },
+        ],
       });
 
-      if (deletedRows === 0) {
+      if (!members || members.length === 0) {
         response = {
-          message: 'Nenhuma tag foi removida.',
+          message: 'Nenhum membro encontrado para este projeto.',
           success: false,
         };
         return response;
       }
 
       response = {
-        message: 'Tag removida com sucesso.',
+        message: 'Membros encontrados com sucesso.',
         success: true,
+        data: members,
       };
       return response;
     } catch (err) {
       console.log(err);
       let response: ResponseI = {
-        message: 'Erro ao remover tag, consulte o Log.',
+        message: 'Erro ao buscar membros do projeto, consulte o Log.',
         success: false,
       };
       return response;

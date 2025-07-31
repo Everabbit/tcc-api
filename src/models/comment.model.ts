@@ -21,6 +21,8 @@ export interface CommentI {
   author?: UserI;
   content: string;
   edited: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 @Table({

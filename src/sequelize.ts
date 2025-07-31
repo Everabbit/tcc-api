@@ -10,6 +10,7 @@ import { GitHubLink } from './models/github_link.model';
 import { Commit } from './models/commit.model';
 import { Attachment } from './models/attachment.model';
 import { Comment } from './models/comment.model';
+import TaskTag from './models/task_tag.model';
 
 const sequelize = new Sequelize({
   database: process.env.DATABASE,
@@ -31,6 +32,7 @@ const sequelize = new Sequelize({
     Commit,
     Comment,
     Attachment,
+    TaskTag,
   ], // ARQUIVOS DE MODEL
   logging: false, // Opcional: desativa logs de SQL no console
 });
