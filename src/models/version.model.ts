@@ -37,7 +37,7 @@ export class Version extends Model implements VersionI {
 
   @AllowNull(false)
   @ForeignKey(() => Project)
-  @Column({ type: DataType.INTEGER })
+  @Column({ type: DataType.INTEGER, onDelete: 'CASCADE' })
   projectId!: number;
 
   @BelongsTo(() => Project)

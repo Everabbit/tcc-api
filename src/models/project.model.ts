@@ -44,7 +44,7 @@ export class Project extends Model implements ProjectI {
 
   @AllowNull(false)
   @ForeignKey(() => User)
-  @Column({ type: DataType.INTEGER })
+  @Column({ type: DataType.INTEGER, onDelete: 'CASCADE' })
   creatorId!: number;
 
   @AllowNull(false)

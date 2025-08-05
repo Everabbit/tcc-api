@@ -11,6 +11,9 @@ export default class TaskRoute {
     app
       .route('/tasks/create')
       .post(this.middleware.validateToken, uploadAttachment.array('attachment'), this.controller.createTask);
+    app
+      .route('/tasks/update/:taskId')
+      .put(this.middleware.validateToken, uploadAttachment.array('attachment'), this.controller.updateTask);
     app.route('/tasks/getall/:versionId').get(this.middleware.validateToken, this.controller.getAllTasks);
     app.route('/tasks/updatestatus/:taskId').put(this.middleware.validateToken, this.controller.updateStatusTask);
     app.route('/tasks/get/:taskId').get(this.middleware.validateToken, this.controller.getTask);

@@ -32,7 +32,7 @@ export class Tag extends Model implements TagI {
 
   @AllowNull(false)
   @ForeignKey(() => Project)
-  @Column({ type: DataType.INTEGER })
+  @Column({ type: DataType.INTEGER, onDelete: 'CASCADE' })
   projectId!: number;
 
   @BelongsTo(() => Project)

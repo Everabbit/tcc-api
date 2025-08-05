@@ -38,7 +38,7 @@ export class Commit extends Model<CommitI, CommitI> implements CommitI {
 
   @ForeignKey(() => GitHubLink)
   @AllowNull(false)
-  @Column(DataType.INTEGER)
+  @Column({ type: DataType.INTEGER, onDelete: 'CASCADE' })
   linkId!: number;
 
   @BelongsTo(() => GitHubLink)
@@ -46,7 +46,7 @@ export class Commit extends Model<CommitI, CommitI> implements CommitI {
 
   @ForeignKey(() => Task)
   @AllowNull(false)
-  @Column(DataType.INTEGER)
+  @Column({ type: DataType.INTEGER, onDelete: 'CASCADE' })
   taskId!: number;
 
   @BelongsTo(() => Task)

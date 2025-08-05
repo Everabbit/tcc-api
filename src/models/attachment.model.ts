@@ -36,7 +36,7 @@ export class Attachment extends Model<AttachmentI> {
 
   @ForeignKey(() => Task)
   @AllowNull(false)
-  @Column(DataType.INTEGER)
+  @Column({ type: DataType.INTEGER, onDelete: 'CASCADE' })
   taskId!: number;
 
   @BelongsTo(() => Task)

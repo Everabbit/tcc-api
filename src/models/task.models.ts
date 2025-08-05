@@ -52,7 +52,7 @@ export class Task extends Model implements TaskI {
 
   @ForeignKey(() => Version)
   @AllowNull(false)
-  @Column(DataType.INTEGER)
+  @Column({ type: DataType.INTEGER, onDelete: 'CASCADE' })
   versionId!: number;
 
   @BelongsTo(() => Version, 'versionId')

@@ -49,7 +49,6 @@ export default class TaskController {
 
       if (task.tags && task.tags.length > 0) {
         for (const tag of task.tags) {
-          console.log(task);
           const tagSaved: ResponseI = await TaskService.saveTag(taskCreated.data.id, tag.tagId);
           if (!tagSaved.success) {
             response = {
@@ -78,6 +77,92 @@ export default class TaskController {
         message: 'Tarefa criada com sucesso!',
         success: true,
         data: taskCreated.data,
+      };
+      return ResponseValidator.response(req, res, HttpStatus.OK, response);
+    } catch (err) {
+      console.log(err);
+      const response: ResponseI = {
+        message: `Erro: ${err}`,
+        success: false,
+      };
+      return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
+    }
+  }
+
+  public async updateTask(req: Request, res: Response) {
+    try {
+      let response: ResponseI = {
+        message: '',
+        success: false,
+      };
+
+      const taskId: number = parseInt(req.params.taskId);
+      const task: TaskI = JSON.parse(req.body.task);
+      const attachments = req.files as Express.Multer.File[];
+
+      if (!taskId) {
+        response = {
+          message: 'Id da tarefa não informado!',
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.BAD_REQUEST, response);
+      }
+
+      const updatedTask: TaskI = {
+        id: taskId,
+        versionId: task.versionId,
+        assigneeId: task.assigneeId,
+        parentTaskId: task.parentTaskId,
+        title: task.title,
+        description: task.description,
+        priority: task.priority,
+        status: task.status,
+        deadline: task.deadline ? new Date(task.deadline) : undefined,
+        blockReason: task.blockReason,
+      };
+
+      const taskUpdated: ResponseI = await TaskService.update(updatedTask);
+
+      if (!taskUpdated.success) {
+        response = {
+          message: taskUpdated.message,
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
+      }
+
+      // if (task.tags && task.tags.length > 0) {
+      //   for (const tag of task.tags) {
+      //     const tagSaved: ResponseI = await TaskService.saveTag(taskUpdated.data.id, tag.tagId);
+      //     if (!tagSaved.success) {
+      //       response = {
+      //         message: `Falha ao associar tag ${tag.tag?.name}: ${tagSaved.message}`,
+      //         success: false,
+      //       };
+      //       return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
+      //     }
+      //   }
+      // }
+
+      // buscar tags, verificar as que já estão cadastradas e não fazer nada, as que estão cadastradas e não estão mais devem ser removidas, e as que estão no item alterado e não estão cadastradas precisam ser cadastradas
+
+      if (attachments && attachments.length > 0) {
+        for (const attachment of attachments) {
+          const attachmentUploaded: ResponseI = await TaskService.uploadFile(taskUpdated.data.id, attachment);
+          if (!attachmentUploaded.success) {
+            response = {
+              message: `Falha ao fazer upload do anexo ${attachment.originalname}: ${attachmentUploaded.message}`,
+              success: false,
+            };
+            return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
+          }
+        }
+      }
+
+      response = {
+        message: 'Tarefa atualizada com sucesso!',
+        success: true,
+        data: taskUpdated.data,
       };
       return ResponseValidator.response(req, res, HttpStatus.OK, response);
     } catch (err) {

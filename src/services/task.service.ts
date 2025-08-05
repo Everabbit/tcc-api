@@ -58,6 +58,69 @@ export default class TaskService {
     }
   }
 
+  public static async update(task: TaskI): Promise<ResponseI> {
+    try {
+      let response: ResponseI = {
+        message: '',
+        success: false,
+      };
+
+      if (!task || !task.id) {
+        response = {
+          message: 'Tarefa inválida, verifique os dados.',
+          success: false,
+        };
+        return response;
+      }
+
+      const taskExists = await Task.findOne({ where: { id: task.id } });
+      if (!taskExists) {
+        response = {
+          message: 'Tarefa não encontrada.',
+          success: false,
+        };
+        return response;
+      }
+
+      const [rowsAffected, [updatedTask]] = await Task.update(
+        {
+          versionId: task.versionId,
+          assigneeId: task.assigneeId,
+          parentTaskId: task.parentTaskId,
+          title: task.title,
+          description: task.description,
+          priority: task.priority,
+          status: task.status,
+          deadline: task.deadline,
+          blockReason: task.blockReason,
+        },
+        { where: { id: task.id }, returning: true }
+      );
+
+      if (rowsAffected === 0) {
+        response = {
+          message: 'Nenhuma tarefa foi atualizada.',
+          success: false,
+        };
+        return response;
+      }
+
+      response = {
+        message: 'Tarefa atualizada com sucesso.',
+        success: true,
+        data: updatedTask,
+      };
+      return response;
+    } catch (err) {
+      console.log(err);
+      let response: ResponseI = {
+        message: 'Erro ao atualizar tarefa, consulte o Log.',
+        success: false,
+      };
+      return response;
+    }
+  }
+
   public static async uploadFile(taskId: number, file: Express.Multer.File): Promise<ResponseI> {
     try {
       let response: ResponseI = {
@@ -119,6 +182,59 @@ export default class TaskService {
       console.log(err);
       let response: ResponseI = {
         message: 'Erro ao anexar arquivo, consulte o Log.',
+        success: false,
+      };
+      return response;
+    }
+  }
+
+  public static async removeFile(attachmentId: number): Promise<ResponseI> {
+    try {
+      let response: ResponseI = {
+        message: '',
+        success: false,
+      };
+
+      if (!attachmentId) {
+        response = {
+          message: 'Id do anexo não informado!',
+          success: false,
+        };
+        return response;
+      }
+
+      const attachment = await Attachment.findByPk(attachmentId);
+      if (!attachment) {
+        response = {
+          message: 'Anexo não encontrado.',
+          success: false,
+        };
+        return response;
+      }
+
+      fs.unlinkSync(attachment.url);
+
+      const deletedRows = await Attachment.destroy({
+        where: { id: attachmentId },
+      });
+
+      if (deletedRows === 0) {
+        response = {
+          message: 'Nenhum anexo foi removido.',
+          success: false,
+        };
+        return response;
+      }
+
+      response = {
+        message: 'Anexo removido com sucesso!',
+        success: true,
+      };
+      return response;
+    } catch (err) {
+      console.log(err);
+      let response: ResponseI = {
+        message: 'Erro ao remover anexo, consulte o Log.',
         success: false,
       };
       return response;
@@ -196,6 +312,115 @@ export default class TaskService {
     }
   }
 
+  public static async removeTag(taskId: number, tagId: number): Promise<ResponseI> {
+    try {
+      let response: ResponseI = {
+        message: '',
+        success: false,
+      };
+
+      if (!taskId || !tagId) {
+        response = {
+          message: 'Dados incompletos para remover a tag da tarefa.',
+          success: false,
+        };
+        return response;
+      }
+
+      const taskTagExists = await TaskTag.findOne({ where: { taskId, tagId } });
+      if (!taskTagExists) {
+        response = {
+          message: 'Esta tag não está associada a esta tarefa.',
+          success: false,
+        };
+        return response;
+      }
+
+      const deletedRows = await TaskTag.destroy({
+        where: { id: taskTagExists.id },
+      });
+
+      if (deletedRows === 0) {
+        response = {
+          message: 'Nenhuma tag foi removida da tarefa.',
+          success: false,
+        };
+        return response;
+      }
+
+      response = {
+        message: 'Tag removida da tarefa com sucesso!',
+        success: true,
+      };
+      return response;
+    } catch (err) {
+      console.log(err);
+      let response: ResponseI = {
+        message: 'Erro ao remover tag da tarefa, consulte o Log.',
+        success: false,
+      };
+      return response;
+    }
+  }
+
+  public static async get(taskId: number): Promise<ResponseI> {
+    try {
+      let response: ResponseI = {
+        message: '',
+        success: false,
+      };
+
+      if (!taskId) {
+        response = {
+          message: 'Id da tarefa não informado!',
+          success: false,
+        };
+        return response;
+      }
+
+      const task: TaskI | null = await Task.findOne({
+        where: { id: taskId },
+        include: [
+          {
+            model: Attachment,
+          },
+          {
+            model: User,
+            attributes: ['id', 'fullName', 'username', 'image'],
+          },
+          {
+            model: Comment,
+          },
+          {
+            model: TaskTag,
+          },
+        ],
+      });
+
+      if (!task) {
+        response = {
+          message: 'Tarefa não encontrada.',
+          success: false,
+        };
+        return response;
+      }
+
+      response = {
+        message: 'Tarefa encontrada com sucesso.',
+        success: true,
+        data: task,
+      };
+      return response;
+    } catch (err) {
+      console.log(err);
+      let response: ResponseI = {
+        message: 'Erro ao buscar tarefa, consulte o Log.',
+        success: false,
+      };
+      return response;
+    }
+  }
+
   public static async getAll(versionId: number, userId: number): Promise<ResponseI> {
     try {
       let response: ResponseI = {
@@ -220,6 +445,9 @@ export default class TaskService {
           {
             model: User,
             attributes: ['id', 'fullName', 'username', 'image'],
+          },
+          {
+            model: TaskTag,
           },
         ],
       });
@@ -297,61 +525,6 @@ export default class TaskService {
       console.log(err);
       let response: ResponseI = {
         message: 'Erro ao atualizar status da tarefa, consulte o Log.',
-        success: false,
-      };
-      return response;
-    }
-  }
-
-  public static async get(taskId: number): Promise<ResponseI> {
-    try {
-      let response: ResponseI = {
-        message: '',
-        success: false,
-      };
-
-      if (!taskId) {
-        response = {
-          message: 'Id da tarefa não informado!',
-          success: false,
-        };
-        return response;
-      }
-
-      const task: TaskI | null = await Task.findOne({
-        where: { id: taskId },
-        include: [
-          {
-            model: Attachment,
-          },
-          {
-            model: User,
-            attributes: ['id', 'fullName', 'username', 'image'],
-          },
-          {
-            model: Comment,
-          },
-        ],
-      });
-
-      if (!task) {
-        response = {
-          message: 'Tarefa não encontrada.',
-          success: false,
-        };
-        return response;
-      }
-
-      response = {
-        message: 'Tarefa encontrada com sucesso.',
-        success: true,
-        data: task,
-      };
-      return response;
-    } catch (err) {
-      console.log(err);
-      let response: ResponseI = {
-        message: 'Erro ao buscar tarefa, consulte o Log.',
         success: false,
       };
       return response;

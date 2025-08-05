@@ -34,7 +34,7 @@ export class GitHubLink extends Model<GitHubLinkI> {
 
   @AllowNull(false)
   @ForeignKey(() => Project)
-  @Column(DataType.INTEGER)
+  @Column({ type: DataType.INTEGER, onDelete: 'CASCADE' })
   projectId!: number;
 
   @BelongsTo(() => Project)

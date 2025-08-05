@@ -38,7 +38,7 @@ export class Comment extends Model implements CommentI {
 
   @AllowNull(false)
   @ForeignKey(() => Task)
-  @Column({ type: DataType.INTEGER })
+  @Column({ type: DataType.INTEGER, onDelete: 'CASCADE' })
   taskId!: number;
 
   @BelongsTo(() => Task)

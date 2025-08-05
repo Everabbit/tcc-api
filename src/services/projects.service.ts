@@ -152,9 +152,6 @@ export default class ProjectService {
         return response;
       }
 
-      await ProjectParticipation.destroy({ where: { projectId: projectExists.id } });
-      await Version.destroy({ where: { projectId: projectExists.id } });
-
       const deletedRows = await Project.destroy({
         where: { id: projectExists.id },
       });

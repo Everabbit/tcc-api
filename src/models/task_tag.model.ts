@@ -33,7 +33,7 @@ export default class TaskTag extends Model implements TaskTagI {
 
   @AllowNull(false)
   @ForeignKey(() => Task)
-  @Column(DataType.INTEGER)
+  @Column({ type: DataType.INTEGER, onDelete: 'CASCADE' })
   taskId!: number;
 
   @BelongsTo(() => Task)
@@ -41,7 +41,7 @@ export default class TaskTag extends Model implements TaskTagI {
 
   @AllowNull(false)
   @ForeignKey(() => Tag)
-  @Column(DataType.INTEGER)
+  @Column({ type: DataType.INTEGER, onDelete: 'CASCADE' })
   tagId!: number;
 
   @BelongsTo(() => Tag)
