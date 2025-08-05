@@ -3,6 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import sequelize from './sequelize';
 import { ExpressRouter } from './configs/router';
+import path from 'path';
 
 const app = express();
 const router = new ExpressRouter();
@@ -20,6 +21,7 @@ app.use((req, res, next) => {
     next();
   }
 });
+app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
 // Rotas
 router.instanceRoutes(app);

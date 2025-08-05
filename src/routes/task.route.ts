@@ -17,5 +17,8 @@ export default class TaskRoute {
     app.route('/tasks/getall/:versionId').get(this.middleware.validateToken, this.controller.getAllTasks);
     app.route('/tasks/updatestatus/:taskId').put(this.middleware.validateToken, this.controller.updateStatusTask);
     app.route('/tasks/get/:taskId').get(this.middleware.validateToken, this.controller.getTask);
+    app.route('/tasks/addcomment').post(this.middleware.validateToken, this.controller.addComment);
+    app.route('/tasks/removecomment/:commentId').delete(this.middleware.validateToken, this.controller.removeComment);
+    app.route('/tasks/updatecomment').put(this.middleware.validateToken, this.controller.updateComment);
   }
 }

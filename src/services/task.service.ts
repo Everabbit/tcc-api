@@ -5,7 +5,7 @@ import { Task, TaskI } from '../models/task.models';
 import * as fs from 'fs';
 import { User } from '../models/user.model';
 import { TaskStatusEnum } from '../enums/status.enum';
-import { Comment } from '../models/comment.model';
+import { Comment, CommentI } from '../models/comment.model';
 import { Tag } from '../models/tag.model';
 import TaskTag from '../models/task_tag.model';
 
@@ -145,6 +145,8 @@ export default class TaskService {
         return response;
       }
 
+      file.originalname = file.originalname.replace(/\s/g, '_');
+
       const uploadDir = path.join(process.cwd(), 'uploads');
       if (!fs.existsSync(uploadDir)) {
         fs.mkdirSync(uploadDir, { recursive: true });
@@ -155,10 +157,12 @@ export default class TaskService {
 
       fs.writeFileSync(filePath, file.buffer);
 
+      const fileUrl = `${process.env.API_BASE_URL}/uploads/${fileName}`;
+
       const newAttachment = await Attachment.create({
         taskId: taskId,
         fileName: file.originalname,
-        url: filePath,
+        url: fileUrl,
         type: file.mimetype,
         size: file.size,
         uploadedAt: new Date(),
@@ -235,6 +239,49 @@ export default class TaskService {
       console.log(err);
       let response: ResponseI = {
         message: 'Erro ao remover anexo, consulte o Log.',
+        success: false,
+      };
+      return response;
+    }
+  }
+
+  public static async getAttachments(taskId: number): Promise<ResponseI> {
+    try {
+      let response: ResponseI = {
+        message: '',
+        success: false,
+      };
+
+      if (!taskId) {
+        response = {
+          message: 'Id da tarefa não informado!',
+          success: false,
+        };
+        return response;
+      }
+
+      const attachments: Attachment[] = await Attachment.findAll({
+        where: { taskId: taskId },
+      });
+
+      if (!attachments) {
+        response = {
+          message: 'Nenhum anexo encontrado para esta tarefa.',
+          success: false,
+        };
+        return response;
+      }
+
+      response = {
+        message: 'Anexos encontrados com sucesso.',
+        success: true,
+        data: attachments,
+      };
+      return response;
+    } catch (err) {
+      console.log(err);
+      let response: ResponseI = {
+        message: 'Erro ao buscar anexos da tarefa, consulte o Log.',
         success: false,
       };
       return response;
@@ -363,6 +410,55 @@ export default class TaskService {
     }
   }
 
+  public static async getTaskTags(taskId: number): Promise<ResponseI> {
+    try {
+      let response: ResponseI = {
+        message: '',
+        success: false,
+      };
+
+      if (!taskId) {
+        response = {
+          message: 'Id da tarefa não informado!',
+          success: false,
+        };
+        return response;
+      }
+
+      const taskTags: TaskTag[] = await TaskTag.findAll({
+        where: { taskId: taskId },
+        include: [
+          {
+            model: Tag,
+            attributes: ['id', 'name', 'color'],
+          },
+        ],
+      });
+
+      if (!taskTags) {
+        response = {
+          message: 'Nenhuma tag encontrada para esta tarefa.',
+          success: false,
+        };
+        return response;
+      }
+
+      response = {
+        message: 'Tags da tarefa encontradas com sucesso.',
+        success: true,
+        data: taskTags,
+      };
+      return response;
+    } catch (err) {
+      console.log(err);
+      let response: ResponseI = {
+        message: 'Erro ao buscar tags da tarefa, consulte o Log.',
+        success: false,
+      };
+      return response;
+    }
+  }
+
   public static async get(taskId: number): Promise<ResponseI> {
     try {
       let response: ResponseI = {
@@ -390,6 +486,12 @@ export default class TaskService {
           },
           {
             model: Comment,
+            include: [
+              {
+                model: User,
+                attributes: ['id', 'fullName', 'username', 'image'],
+              },
+            ],
           },
           {
             model: TaskTag,
@@ -525,6 +627,185 @@ export default class TaskService {
       console.log(err);
       let response: ResponseI = {
         message: 'Erro ao atualizar status da tarefa, consulte o Log.',
+        success: false,
+      };
+      return response;
+    }
+  }
+
+  public static async addComment(comment: CommentI): Promise<ResponseI> {
+    try {
+      let response: ResponseI = {
+        message: '',
+        success: false,
+      };
+
+      if (!comment || !comment.taskId || !comment.authorId || !comment.content) {
+        response = {
+          message: 'Dados incompletos para adicionar comentário.',
+          success: false,
+        };
+        return response;
+      }
+
+      const taskExists = await Task.findByPk(comment.taskId);
+      if (!taskExists) {
+        response = {
+          message: 'Tarefa não encontrada.',
+          success: false,
+        };
+        return response;
+      }
+
+      const createdComment = await Comment.create({
+        taskId: comment.taskId,
+        authorId: comment.authorId,
+        content: comment.content,
+      });
+
+      if (!createdComment) {
+        response = {
+          message: 'Erro ao adicionar comentário, consulte o Log.',
+          success: false,
+        };
+        return response;
+      }
+
+      const newComment = await Comment.findByPk(createdComment.id, {
+        include: [
+          {
+            model: User,
+            attributes: ['id', 'fullName', 'username', 'image'],
+          },
+        ],
+      });
+
+      response = {
+        message: 'Comentário adicionado com sucesso!',
+        success: true,
+        data: newComment,
+      };
+      return response;
+    } catch (err) {
+      console.log(err);
+      let response: ResponseI = {
+        message: 'Erro ao adicionar comentário, consulte o Log.',
+        success: false,
+      };
+      return response;
+    }
+  }
+
+  public static async removeComment(commentId: number): Promise<ResponseI> {
+    try {
+      let response: ResponseI = {
+        message: '',
+        success: false,
+      };
+
+      if (!commentId) {
+        response = {
+          message: 'Id do comentário não informado!',
+          success: false,
+        };
+        return response;
+      }
+
+      const commentExists = await Comment.findByPk(commentId);
+      if (!commentExists) {
+        response = {
+          message: 'Comentário não encontrado.',
+          success: false,
+        };
+        return response;
+      }
+
+      const deletedRows = await Comment.destroy({
+        where: { id: commentId },
+      });
+
+      if (deletedRows === 0) {
+        response = {
+          message: 'Nenhum comentário foi removido.',
+          success: false,
+        };
+        return response;
+      }
+
+      response = {
+        message: 'Comentário removido com sucesso!',
+        success: true,
+      };
+      return response;
+    } catch (err) {
+      console.log(err);
+      let response: ResponseI = {
+        message: 'Erro ao remover comentário, consulte o Log.',
+        success: false,
+      };
+      return response;
+    }
+  }
+
+  public static async updateComment(comment: CommentI): Promise<ResponseI> {
+    try {
+      let response: ResponseI = {
+        message: '',
+        success: false,
+      };
+
+      if (!comment || !comment.id || !comment.content) {
+        response = {
+          message: 'Dados incompletos para atualizar o comentário.',
+          success: false,
+        };
+        return response;
+      }
+
+      const commentExists = await Comment.findByPk(comment.id);
+      if (!commentExists) {
+        response = {
+          message: 'Comentário não encontrado.',
+          success: false,
+        };
+        return response;
+      }
+
+      const [rowsAffected, [updatedComment]] = await Comment.update(
+        {
+          content: comment.content,
+          edited: true,
+        },
+        { where: { id: comment.id }, returning: true }
+      );
+
+      if (rowsAffected === 0) {
+        response = {
+          message: 'Nenhum comentário foi atualizado.',
+          success: false,
+        };
+        return response;
+      }
+
+      const newComment = await Comment.findByPk(updatedComment.id, {
+        include: [
+          {
+            model: User,
+            attributes: ['id', 'fullName', 'username', 'image'],
+          },
+        ],
+      });
+
+      response = {
+        message: 'Comentário atualizado com sucesso!',
+        success: true,
+        data: newComment,
+      };
+      return response;
+    } catch (err) {
+      console.log(err);
+      let response: ResponseI = {
+        message: 'Erro ao atualizar comentário, consulte o Log.',
         success: false,
       };
       return response;
