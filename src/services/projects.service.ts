@@ -10,6 +10,8 @@ import { ProjectStatus } from '../enums/project_status.enum';
 import { User } from '../models/user.model';
 import { Version } from '../models/version.model';
 import { Tag, TagI } from '../models/tag.model';
+import { Task } from '../models/task.models';
+import { TaskStatusEnum } from '../enums/status.enum';
 
 export default class ProjectService {
   //crud dos projetos
@@ -208,6 +210,12 @@ export default class ProjectService {
           },
           {
             model: Version,
+            include: [
+              {
+                model: Task,
+                attributes: ['id', 'status'],
+              },
+            ],
           },
           {
             model: Tag,
@@ -259,7 +267,7 @@ export default class ProjectService {
         success: false,
       };
 
-      const projects: ProjectI[] = await Project.findAll({
+      const projects = await Project.findAll({
         include: [
           {
             model: ProjectParticipation,
@@ -267,6 +275,15 @@ export default class ProjectService {
               {
                 model: User,
                 attributes: ['id', 'username', 'image'],
+              },
+            ],
+          },
+          {
+            model: Version,
+            include: [
+              {
+                model: Task,
+                attributes: ['id', 'status'],
               },
             ],
           },
@@ -281,14 +298,15 @@ export default class ProjectService {
         return response;
       }
 
-      //verificar se usuário é criador ou participante, se não remover o projeto
-      const filteredProjects = projects.filter(project => {
-        const isCreator = project.creatorId === userId;
-        const isParticipant = project.participation?.some(
-          (participation: ProjectParticipationI) => participation.userId === userId
-        );
-        return isCreator || isParticipant;
-      });
+      const filteredProjects: ProjectI[] = projects
+        .filter(project => {
+          const isCreator = project.creatorId === userId;
+          const isParticipant = project.participation?.some(
+            (participation: ProjectParticipationI) => participation.userId === userId
+          );
+          return isCreator || isParticipant;
+        })
+        .map(project => project.dataValues);
 
       if (filteredProjects.length === 0) {
         response = {
@@ -296,6 +314,22 @@ export default class ProjectService {
           success: false,
         };
         return response;
+      }
+
+      for (const project of filteredProjects) {
+        let totalTasks = 0;
+        let completedTasks = 0;
+
+        if (project.versions) {
+          for (const version of project.versions) {
+            if (version.tasks) {
+              totalTasks += version.tasks.length;
+              completedTasks += version.tasks.filter(task => task.status === TaskStatusEnum.DONE).length;
+            }
+          }
+        }
+
+        project.progress = totalTasks > 0 ? completedTasks / totalTasks : 0;
       }
 
       response = {

@@ -29,7 +29,7 @@ export default class VersionController {
         name: version.name,
         description: version.description,
         status: version.status,
-        startDate: version.startDate ? new Date(version.startDate) : new Date(),
+        startDate: version.startDate ? new Date(version.startDate) : undefined,
         endDate: version.endDate ? new Date(version.endDate) : undefined,
         projectId: version.projectId,
       };

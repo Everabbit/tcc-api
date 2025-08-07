@@ -5,12 +5,14 @@ import {
   Column,
   DataType,
   ForeignKey,
+  HasMany,
   Model,
   PrimaryKey,
   Table,
 } from 'sequelize-typescript';
 import { VersionStatusEnum } from '../enums/status.enum';
 import { Project, ProjectI } from './project.model';
+import { Task, TaskI } from './task.models';
 
 export interface VersionI {
   id?: number;
@@ -19,9 +21,10 @@ export interface VersionI {
   name: string;
   description?: string;
   status: VersionStatusEnum;
-  startDate: Date;
+  startDate?: Date;
   endDate?: Date;
   githubBranch?: string;
+  tasks?: TaskI[];
 }
 
 @Table({
@@ -55,9 +58,9 @@ export class Version extends Model implements VersionI {
   @Column({ type: DataType.INTEGER })
   status!: VersionStatusEnum;
 
-  @AllowNull(false)
+  @AllowNull(true)
   @Column({ type: DataType.DATE })
-  startDate!: Date;
+  startDate?: Date;
 
   @AllowNull(true)
   @Column({ type: DataType.DATE })
@@ -66,4 +69,7 @@ export class Version extends Model implements VersionI {
   @AllowNull(true)
   @Column({ type: DataType.STRING })
   githubBranch?: string;
+
+  @HasMany(() => Task)
+  tasks?: TaskI[];
 }

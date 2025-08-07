@@ -53,7 +53,6 @@ export default class ProjectController {
         return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
       }
 
-      //adicionar usuário principal
       const admin: ProjectMemberI = {
         id: userId,
         role: 1,

@@ -1,4 +1,5 @@
 import { ResponseI } from '../interfaces/response.interface';
+import { Task } from '../models/task.models';
 import { Version, VersionI } from '../models/version.model';
 
 export default class VersionService {
@@ -183,6 +184,12 @@ export default class VersionService {
 
       const versions: VersionI[] = await Version.findAll({
         where: { projectId: projectId },
+        include: [
+          {
+            model: Task,
+            attributes: ['id', 'status'],
+          },
+        ],
       });
 
       if (!versions) {

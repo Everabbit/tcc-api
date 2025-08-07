@@ -8,6 +8,8 @@ import { TaskStatusEnum } from '../enums/status.enum';
 import { Comment, CommentI } from '../models/comment.model';
 import { Tag } from '../models/tag.model';
 import TaskTag from '../models/task_tag.model';
+import { Version } from '../models/version.model';
+import { Project } from '../models/project.model';
 
 export default class TaskService {
   public static async create(task: TaskI): Promise<ResponseI> {
@@ -121,6 +123,57 @@ export default class TaskService {
     }
   }
 
+  public static async delete(taskId: number): Promise<ResponseI> {
+    try {
+      let response: ResponseI = {
+        message: '',
+        success: false,
+      };
+
+      if (!taskId) {
+        response = {
+          message: 'Id da tarefa não informado.',
+          success: false,
+        };
+        return response;
+      }
+
+      const taskExists = await Task.findOne({ where: { id: taskId } });
+      if (!taskExists) {
+        response = {
+          message: 'Tarefa não encontrada.',
+          success: false,
+        };
+        return response;
+      }
+
+      const deletedRows = await Task.destroy({
+        where: { id: taskId },
+      });
+
+      if (deletedRows === 0) {
+        response = {
+          message: 'Nenhuma tarefa foi removida.',
+          success: false,
+        };
+        return response;
+      }
+
+      response = {
+        message: 'Tarefa removida com sucesso.',
+        success: true,
+      };
+      return response;
+    } catch (err) {
+      console.log(err);
+      let response: ResponseI = {
+        message: 'Erro ao remover tarefa, consulte o Log.',
+        success: false,
+      };
+      return response;
+    }
+  }
+
   public static async uploadFile(taskId: number, file: Express.Multer.File): Promise<ResponseI> {
     try {
       let response: ResponseI = {
@@ -216,7 +269,12 @@ export default class TaskService {
         return response;
       }
 
-      fs.unlinkSync(attachment.url);
+      const fileName = path.basename(attachment.url);
+      const filePath = path.join(process.cwd(), 'uploads', fileName);
+
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
 
       const deletedRows = await Attachment.destroy({
         where: { id: attachmentId },
@@ -496,6 +554,16 @@ export default class TaskService {
           {
             model: TaskTag,
           },
+          {
+            model: Version,
+            attributes: ['id', 'name', 'description'],
+            include: [
+              {
+                model: Project,
+                attributes: ['id', 'name', 'description'],
+              },
+            ],
+          },
         ],
       });
 
@@ -530,43 +598,76 @@ export default class TaskService {
         success: false,
       };
 
-      if (!versionId) {
+      if (versionId) {
+        const tasks: TaskI[] = await Task.findAll({
+          where: { versionId: versionId },
+          include: [
+            {
+              model: Attachment,
+            },
+            {
+              model: User,
+              attributes: ['id', 'fullName', 'username', 'image'],
+            },
+            {
+              model: TaskTag,
+              include: [
+                {
+                  model: Tag,
+                  attributes: ['id', 'name', 'color'],
+                },
+              ],
+            },
+          ],
+        });
+        if (!tasks) {
+          response = {
+            message: 'Nenhuma tarefa encontrada.',
+            success: false,
+          };
+          return response;
+        }
         response = {
-          message: 'Id da versão não informado!',
-          success: false,
+          message: 'Tarefas encontradas com sucesso.',
+          success: true,
+          data: tasks,
         };
-        return response;
+      } else {
+        const tasks: TaskI[] = await Task.findAll({
+          where: { assigneeId: userId },
+          include: [
+            {
+              model: Attachment,
+            },
+            {
+              model: User,
+              attributes: ['id', 'fullName', 'username', 'image'],
+            },
+            {
+              model: TaskTag,
+              include: [
+                {
+                  model: Tag,
+                  attributes: ['id', 'name', 'color'],
+                },
+              ],
+            },
+          ],
+        });
+        if (!tasks) {
+          response = {
+            message: 'Nenhuma tarefa encontrada.',
+            success: false,
+          };
+          return response;
+        }
+        response = {
+          message: 'Tarefas encontradas com sucesso.',
+          success: true,
+          data: tasks,
+        };
       }
 
-      const tasks: TaskI[] = await Task.findAll({
-        where: { versionId: versionId },
-        include: [
-          {
-            model: Attachment,
-          },
-          {
-            model: User,
-            attributes: ['id', 'fullName', 'username', 'image'],
-          },
-          {
-            model: TaskTag,
-          },
-        ],
-      });
-
-      if (!tasks) {
-        response = {
-          message: 'Nenhuma tarefa encontrada.',
-          success: false,
-        };
-        return response;
-      }
-
-      response = {
-        message: 'Tarefas encontradas com sucesso.',
-        success: true,
-        data: tasks,
-      };
       return response;
     } catch (err) {
       console.log(err);
@@ -661,6 +762,7 @@ export default class TaskService {
         taskId: comment.taskId,
         authorId: comment.authorId,
         content: comment.content,
+        edited: !!comment.edited,
       });
 
       if (!createdComment) {

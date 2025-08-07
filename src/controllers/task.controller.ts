@@ -75,6 +75,24 @@ export default class TaskController {
         }
       }
 
+      if (task.comments && task.comments.length > 0) {
+        for (const comment of task.comments) {
+          const commentAdded: ResponseI = await TaskService.addComment({
+            taskId: taskCreated.data.id,
+            authorId: comment.authorId,
+            content: comment.content,
+            edited: comment.edited,
+          });
+          if (!commentAdded.success) {
+            response = {
+              message: `Falha ao adicionar comentário: ${commentAdded.message}`,
+              success: false,
+            };
+            return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
+          }
+        }
+      }
+
       response = {
         message: 'Tarefa criada com sucesso!',
         success: true,
@@ -227,6 +245,48 @@ export default class TaskController {
     }
   }
 
+  public async deleteTask(req: Request, res: Response) {
+    try {
+      let response: ResponseI = {
+        message: '',
+        success: false,
+      };
+
+      const taskId: number = parseInt(req.params.taskId);
+
+      if (!taskId) {
+        response = {
+          message: 'Id da tarefa não informado!',
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.BAD_REQUEST, response);
+      }
+
+      const taskDeleted: ResponseI = await TaskService.delete(taskId);
+
+      if (!taskDeleted.success) {
+        response = {
+          message: taskDeleted.message,
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
+      }
+
+      response = {
+        message: 'Tarefa removida com sucesso!',
+        success: true,
+      };
+      return ResponseValidator.response(req, res, HttpStatus.OK, response);
+    } catch (err) {
+      console.log(err);
+      const response: ResponseI = {
+        message: `Erro: ${err}`,
+        success: false,
+      };
+      return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
+    }
+  }
+
   public async getAllTasks(req: Request, res: Response) {
     try {
       let response: ResponseI = {
@@ -236,14 +296,6 @@ export default class TaskController {
 
       const versionId: number = parseInt(req.params.versionId);
       const userId: number = parseInt(req.params.userId);
-
-      if (!versionId) {
-        response = {
-          message: 'Id da versão não informado!',
-          success: false,
-        };
-        return ResponseValidator.response(req, res, HttpStatus.BAD_REQUEST, response);
-      }
 
       const tasks: ResponseI = await TaskService.getAll(versionId, userId);
 
@@ -474,6 +526,47 @@ export default class TaskController {
         message: 'Comentário atualizado com sucesso!',
         success: true,
         data: commentUpdated.data,
+      };
+      return ResponseValidator.response(req, res, HttpStatus.OK, response);
+    } catch (err) {
+      console.log(err);
+      const response: ResponseI = {
+        message: `Erro: ${err}`,
+        success: false,
+      };
+      return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
+    }
+  }
+  public async deleteAttachment(req: Request, res: Response) {
+    try {
+      let response: ResponseI = {
+        message: '',
+        success: false,
+      };
+
+      const attachmentId: number = parseInt(req.params.attachmentId);
+
+      if (!attachmentId) {
+        response = {
+          message: 'Id do anexo não informado!',
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.BAD_REQUEST, response);
+      }
+
+      const attachmentRemoved: ResponseI = await TaskService.removeFile(attachmentId);
+
+      if (!attachmentRemoved.success) {
+        response = {
+          message: attachmentRemoved.message,
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
+      }
+
+      response = {
+        message: 'Anexo removido com sucesso!',
+        success: true,
       };
       return ResponseValidator.response(req, res, HttpStatus.OK, response);
     } catch (err) {

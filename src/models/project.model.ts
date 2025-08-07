@@ -23,7 +23,7 @@ export interface ProjectI {
   status: ProjectStatus;
   banner?: string;
   deadline?: Date | null;
-  progress: number;
+  progress?: number;
   participation?: ProjectParticipationI[];
   createdAt?: Date;
   updatedAt?: Date;
@@ -66,10 +66,6 @@ export class Project extends Model implements ProjectI {
   @AllowNull(true)
   @Column({ type: DataType.DATE })
   deadline?: Date | null;
-
-  @AllowNull(false)
-  @Column({ type: DataType.INTEGER })
-  progress!: number;
 
   @HasMany(() => ProjectParticipation)
   participation?: ProjectParticipationI[];
