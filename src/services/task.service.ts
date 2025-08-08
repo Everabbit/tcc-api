@@ -10,6 +10,7 @@ import { Tag } from '../models/tag.model';
 import TaskTag from '../models/task_tag.model';
 import { Version } from '../models/version.model';
 import { Project } from '../models/project.model';
+import { deleteFile, uploadFile } from '../utils/files.utils';
 
 export default class TaskService {
   public static async create(task: TaskI): Promise<ResponseI> {
@@ -198,19 +199,7 @@ export default class TaskService {
         return response;
       }
 
-      file.originalname = file.originalname.replace(/\s/g, '_');
-
-      const uploadDir = path.join(process.cwd(), 'uploads');
-      if (!fs.existsSync(uploadDir)) {
-        fs.mkdirSync(uploadDir, { recursive: true });
-      }
-
-      const fileName = `${Date.now()}-${file.originalname}`;
-      const filePath = path.join(uploadDir, fileName);
-
-      fs.writeFileSync(filePath, file.buffer);
-
-      const fileUrl = `${process.env.API_BASE_URL}/uploads/${fileName}`;
+      const fileUrl = await uploadFile(file);
 
       const newAttachment = await Attachment.create({
         taskId: taskId,
@@ -269,11 +258,14 @@ export default class TaskService {
         return response;
       }
 
-      const fileName = path.basename(attachment.url);
-      const filePath = path.join(process.cwd(), 'uploads', fileName);
+      const tryDeleteFile = await deleteFile(attachment.url);
 
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
+      if (!tryDeleteFile) {
+        response = {
+          message: 'Erro ao remover arquivo do sistema de arquivos.',
+          success: false,
+        };
+        return response;
       }
 
       const deletedRows = await Attachment.destroy({

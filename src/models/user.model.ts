@@ -1,4 +1,5 @@
-import { AllowNull, AutoIncrement, Column, DataType, Model, PrimaryKey, Table } from 'sequelize-typescript';
+import { AllowNull, AutoIncrement, Column, DataType, HasOne, Model, PrimaryKey, Table } from 'sequelize-typescript';
+import { UserPreferences, UserPreferencesI } from './user_preferences.model';
 
 export interface UserI {
   id?: number;
@@ -8,6 +9,7 @@ export interface UserI {
   username?: string | null;
   lastAcess?: Date | null;
   image?: string | null;
+  userPreferences?: UserPreferencesI;
 }
 
 @Table({
@@ -44,4 +46,7 @@ export class User extends Model implements UserI {
   @AllowNull(true)
   @Column({ type: DataType.STRING })
   image?: string | null;
+
+  @HasOne(() => UserPreferences)
+  userPreferences?: UserPreferencesI;
 }

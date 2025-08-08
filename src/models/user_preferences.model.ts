@@ -13,9 +13,10 @@ import { User, UserI } from './user.model';
 
 export interface UserPreferencesI {
   id?: number;
-  userId: number;
-  user: UserI;
+  userId?: number;
+  user?: UserI;
   theme?: string;
+  darkMode?: boolean;
   notifyEnabled?: boolean;
   notifyEmail?: boolean;
   notifyPush?: boolean;
@@ -34,15 +35,19 @@ export class UserPreferences extends Model implements UserPreferencesI {
 
   @AllowNull(false)
   @ForeignKey(() => User)
-  @Column({ type: DataType.INTEGER })
+  @Column({ type: DataType.INTEGER, onDelete: 'CASCADE' })
   userId!: number;
 
   @BelongsTo(() => User)
   user!: UserI;
 
   @AllowNull(true)
-  @Column({ type: DataType.STRING })
+  @Column({ type: DataType.STRING, defaultValue: '#007bff' })
   theme?: string;
+
+  @AllowNull(true)
+  @Column({ type: DataType.BOOLEAN, defaultValue: true })
+  darkMode?: boolean;
 
   @AllowNull(true)
   @Column({ type: DataType.BOOLEAN, defaultValue: true })

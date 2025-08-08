@@ -38,7 +38,7 @@ export class ProjectParticipation extends Model implements ProjectParticipationI
 
   @AllowNull(false)
   @ForeignKey(() => User)
-  @Column({ type: DataType.INTEGER })
+  @Column({ type: DataType.INTEGER, onDelete: 'CASCADE' })
   userId!: number;
 
   @BelongsTo(() => User)

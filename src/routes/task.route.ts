@@ -1,7 +1,7 @@
 import { Application } from 'express';
 import TaskController from '../controllers/task.controller';
 import BasicMiddleware from '../middlewares/basic.middleware';
-import { uploadAttachment } from '../configs/upload';
+import { upload } from '../configs/upload';
 
 export default class TaskRoute {
   private controller: TaskController = new TaskController();
@@ -10,10 +10,10 @@ export default class TaskRoute {
   public createInstances(app: Application) {
     app
       .route('/tasks/create')
-      .post(this.middleware.validateToken, uploadAttachment.array('attachment'), this.controller.createTask);
+      .post(this.middleware.validateToken, upload.array('attachment'), this.controller.createTask);
     app
       .route('/tasks/update/:taskId')
-      .put(this.middleware.validateToken, uploadAttachment.array('attachment'), this.controller.updateTask);
+      .put(this.middleware.validateToken, upload.array('attachment'), this.controller.updateTask);
     app.route('/tasks/delete/:taskId').delete(this.middleware.validateToken, this.controller.deleteTask);
     app.route('/tasks/getall/:versionId').get(this.middleware.validateToken, this.controller.getAllTasks);
     app.route('/tasks/updatestatus/:taskId').put(this.middleware.validateToken, this.controller.updateStatusTask);

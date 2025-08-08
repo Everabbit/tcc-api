@@ -6,6 +6,7 @@ import ProjectService from '../services/projects.service';
 import { ProjectI } from '../models/project.model';
 import { ProjectCreateI, ProjectMemberI } from '../interfaces/project.interface';
 import { ProjectStatus } from '../enums/project_status.enum';
+import { deleteFile, uploadFile } from '../utils/files.utils';
 
 export default class ProjectController {
   public async createProject(req: Request, res: Response) {
@@ -30,7 +31,7 @@ export default class ProjectController {
       let bannerUploadUrl: string = '';
 
       if (banner) {
-        bannerUploadUrl = banner.path;
+        bannerUploadUrl = await uploadFile(banner);
       }
 
       const newProject: ProjectI = {
@@ -111,7 +112,10 @@ export default class ProjectController {
       let bannerUploadUrl: string | undefined = project.banner;
 
       if (banner) {
-        bannerUploadUrl = banner.path;
+        if (bannerUploadUrl) {
+          await deleteFile(bannerUploadUrl);
+        }
+        bannerUploadUrl = await uploadFile(banner);
       }
 
       const updatedProject: ProjectI = {

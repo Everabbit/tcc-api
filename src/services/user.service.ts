@@ -1,6 +1,9 @@
 import { Op } from 'sequelize';
 import { ResponseI } from '../interfaces/response.interface';
 import { User, UserI } from '../models/user.model';
+import { UserPreferences, UserPreferencesI } from '../models/user_preferences.model';
+import { deleteFile, uploadFile } from '../utils/files.utils';
+import { PasswordChangeI } from '../interfaces/password.interface';
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
@@ -70,6 +73,11 @@ export default class UserService {
           });
         });
 
+      await UserPreferences.create({
+        userId: newUser.data.id,
+        theme: '#007bff',
+      });
+
       return newUser;
     } catch (err) {
       let response: ResponseI = {
@@ -83,6 +91,119 @@ export default class UserService {
       });
     }
   }
+
+  public static async update(user: UserI): Promise<ResponseI> {
+    try {
+      let response: ResponseI = {
+        message: '',
+        success: false,
+      };
+
+      if (!user || !user.id) {
+        response = {
+          message: 'Dados do usuário incompletos!',
+          success: false,
+        };
+        return response;
+      }
+
+      const userExists = await User.findByPk(user.id);
+      if (!userExists) {
+        response = {
+          message: 'Usuário não encontrado.',
+          success: false,
+        };
+        return response;
+      }
+
+      if (user.password) {
+        user.password = await gerarHash(user.password);
+      }
+
+      const [rowsAffected, [updatedUser]] = await User.update(
+        {
+          email: user.email || userExists.email,
+          fullName: user.fullName || userExists.fullName,
+          username: user.username || userExists.username,
+        },
+        { where: { id: user.id }, returning: true }
+      );
+
+      if (rowsAffected === 0) {
+        response = {
+          message: 'Nenhum usuário foi atualizado.',
+          success: false,
+        };
+        return response;
+      }
+
+      response = {
+        message: 'Usuário atualizado com sucesso.',
+        success: true,
+        data: updatedUser,
+      };
+      return response;
+    } catch (err) {
+      console.log(err);
+      let response: ResponseI = {
+        message: 'Erro ao atualizar usuário, consulte o Log.',
+        success: false,
+      };
+      return response;
+    }
+  }
+
+  public static async delete(userId: number): Promise<ResponseI> {
+    try {
+      let response: ResponseI = {
+        message: '',
+        success: false,
+      };
+
+      if (!userId) {
+        response = {
+          message: 'Id do usuário não informado.',
+          success: false,
+        };
+        return response;
+      }
+
+      const userExists = await User.findByPk(userId);
+      if (!userExists) {
+        response = {
+          message: 'Usuário não encontrado.',
+          success: false,
+        };
+        return response;
+      }
+
+      const deletedRows = await User.destroy({
+        where: { id: userId },
+      });
+
+      if (deletedRows === 0) {
+        response = {
+          message: 'Nenhum usuário foi removido.',
+          success: false,
+        };
+        return response;
+      }
+
+      response = {
+        message: 'Usuário removido com sucesso.',
+        success: true,
+      };
+      return response;
+    } catch (err) {
+      console.log(err);
+      let response: ResponseI = {
+        message: 'Erro ao remover usuário, consulte o Log.',
+        success: false,
+      };
+      return response;
+    }
+  }
+
   public static async login(user: UserI): Promise<ResponseI> {
     try {
       let response: ResponseI = {
@@ -293,6 +414,252 @@ export default class UserService {
       return response;
     }
   }
+
+  public static async updatePassword(userId: number, password: PasswordChangeI): Promise<ResponseI> {
+    try {
+      let response: ResponseI = {
+        message: '',
+        success: false,
+      };
+      console.log(password);
+
+      if (!userId || !password) {
+        response = {
+          message: 'Dados incompletos para atualizar a senha!',
+          success: false,
+        };
+        return response;
+      }
+
+      const userExists = await User.findByPk(userId);
+      if (!userExists) {
+        response = {
+          message: 'Usuário não encontrado.',
+          success: false,
+        };
+        return response;
+      }
+
+      const verifyPassword = await bcrypt.compare(password.currentPassword, userExists.password);
+
+      if (!verifyPassword) {
+        response = {
+          message: 'Senha atual incorreta.',
+          success: false,
+        };
+        return response;
+      }
+
+      if (password.newPassword !== password.newPasswordConfirm) {
+        response = {
+          message: 'Nova senha e confirmação de senha não coincidem.',
+          success: false,
+        };
+        return response;
+      }
+
+      const newHashedPassword = await gerarHash(password.newPassword);
+
+      const [rowsAffected, [updatedUser]] = await User.update(
+        {
+          password: newHashedPassword,
+        },
+        { where: { id: userId }, returning: true }
+      );
+
+      if (rowsAffected === 0) {
+        response = {
+          message: 'Nenhuma senha foi atualizada.',
+          success: false,
+        };
+        return response;
+      }
+
+      response = {
+        message: 'Senha atualizada com sucesso.',
+        success: true,
+        data: updatedUser,
+      };
+      return response;
+    } catch (err) {
+      console.log(err);
+      let response: ResponseI = {
+        message: 'Erro ao atualizar senha, consulte o Log.',
+        success: false,
+      };
+      return response;
+    }
+  }
+
+  public static async getUserSettings(userId: number): Promise<ResponseI> {
+    try {
+      let response: ResponseI = {
+        message: '',
+        success: false,
+      };
+
+      if (!userId) {
+        return (response = {
+          message: 'Id do usuário não informado!',
+          success: false,
+        });
+      }
+      const user: UserI | null = await User.findOne({
+        where: { id: userId },
+        attributes: ['id', 'fullName', 'email', 'username', 'image', 'lastAcess'],
+        include: [
+          {
+            model: UserPreferences,
+          },
+        ],
+      });
+
+      if (!user) {
+        return (response = {
+          message: 'Usuário não encontrado!',
+          success: false,
+        });
+      } else {
+        return (response = {
+          message: 'Usuário encontrado!',
+          success: true,
+          data: user,
+        });
+      }
+    } catch (err) {
+      console.log(err);
+      let response: ResponseI = {
+        message: 'Erro ao buscar informações do usuário, consulte o Log.',
+        success: false,
+      };
+      return response;
+    }
+  }
+
+  public static async updateImage(userId: number, image: Express.Multer.File) {
+    try {
+      let response: ResponseI = {
+        message: '',
+        success: false,
+      };
+
+      if (!userId || !image) {
+        return (response = {
+          message: 'Dados incompletos para atualizar a imagem!',
+          success: false,
+        });
+      }
+
+      const userExists: UserI | null = await User.findByPk(userId);
+
+      if (!userExists) {
+        return (response = {
+          message: 'Usuário não encontrado!',
+          success: false,
+        });
+      }
+
+      const imageUrl = await uploadFile(image);
+
+      const [rowsAffected, [updatedUser]] = await User.update(
+        {
+          image: imageUrl,
+        },
+        { where: { id: userId }, returning: true }
+      );
+
+      if (rowsAffected === 0) {
+        return (response = {
+          message: 'Nenhuma imagem foi atualizada.',
+          success: false,
+        });
+      }
+
+      response = {
+        message: 'Imagem de perfil atualizada com sucesso.',
+        success: true,
+        data: updatedUser,
+      };
+      return response;
+    } catch (err) {
+      console.log(err);
+      let response: ResponseI = {
+        message: 'Erro ao atualizar imagem de perfil, consulte o Log.',
+        success: false,
+      };
+      return response;
+    }
+  }
+
+  public static async removeImage(userId: number) {
+    try {
+      let response: ResponseI = {
+        message: '',
+        success: false,
+      };
+
+      if (!userId) {
+        return (response = {
+          message: 'Id do usuário não informado!',
+          success: false,
+        });
+      }
+
+      const userExists: UserI | null = await User.findByPk(userId);
+
+      if (!userExists) {
+        return (response = {
+          message: 'Usuário não encontrado!',
+          success: false,
+        });
+      }
+
+      if (!userExists.image) {
+        return (response = {
+          message: 'Nenhuma imagem foi encontrada.',
+          success: false,
+        });
+      }
+
+      const tryDeleteFile = await deleteFile(userExists.image);
+
+      if (!tryDeleteFile) {
+        return (response = {
+          message: 'Erro ao remover imagem do sistema de arquivos.',
+          success: false,
+        });
+      }
+
+      const [rowsAffected, [updatedUser]] = await User.update(
+        {
+          image: null,
+        },
+        { where: { id: userId }, returning: true }
+      );
+
+      if (rowsAffected === 0) {
+        return (response = {
+          message: 'Nenhuma imagem foi removida.',
+          success: false,
+        });
+      }
+
+      response = {
+        message: 'Imagem de perfil removida com sucesso.',
+        success: true,
+        data: updatedUser,
+      };
+      return response;
+    } catch (err) {
+      console.log(err);
+      let response: ResponseI = {
+        message: 'Erro ao remover imagem de perfil, consulte o Log.',
+        success: false,
+      };
+      return response;
+    }
+  }
+
   public static async getBasicUserInfo(userId: number): Promise<ResponseI> {
     try {
       let response: ResponseI = {
@@ -309,6 +676,11 @@ export default class UserService {
       const user: UserI | null = await User.findOne({
         where: { id: userId },
         attributes: ['id', 'fullName', 'email', 'username', 'image'],
+        include: [
+          {
+            model: UserPreferences,
+          },
+        ],
       });
 
       if (!user) {
@@ -362,6 +734,111 @@ export default class UserService {
       console.log(err);
       let response: ResponseI = {
         message: 'Erro ao buscar usuários, consulte o Log.',
+        success: false,
+      };
+      return response;
+    }
+  }
+
+  public static async updatePreferences(userPreferences: UserPreferencesI): Promise<ResponseI> {
+    try {
+      let response: ResponseI = {
+        message: '',
+        success: false,
+      };
+
+      if (!userPreferences || !userPreferences.userId) {
+        response = {
+          message: 'Dados de preferência do usuário incompletos!',
+          success: false,
+        };
+        return response;
+      }
+
+      const preferencesExists = await UserPreferences.findOne({ where: { userId: userPreferences.userId } });
+
+      if (!preferencesExists) {
+        response = {
+          message: 'Preferências do usuário não encontradas.',
+          success: false,
+        };
+        return response;
+      }
+
+      const [rowsAffected, [updatedPreferences]] = await UserPreferences.update(
+        {
+          theme: userPreferences.theme || preferencesExists.theme,
+          darkMode: userPreferences.darkMode !== undefined ? userPreferences.darkMode : preferencesExists.darkMode,
+          notifyEnabled:
+            userPreferences.notifyEnabled !== undefined
+              ? userPreferences.notifyEnabled
+              : preferencesExists.notifyEnabled,
+          notifyEmail:
+            userPreferences.notifyEmail !== undefined ? userPreferences.notifyEmail : preferencesExists.notifyEmail,
+          notifyPush:
+            userPreferences.notifyPush !== undefined ? userPreferences.notifyPush : preferencesExists.notifyPush,
+        },
+        { where: { userId: userPreferences.userId }, returning: true }
+      );
+
+      if (rowsAffected === 0) {
+        response = {
+          message: 'Nenhuma preferência foi atualizada.',
+          success: false,
+        };
+        return response;
+      }
+
+      response = {
+        message: 'Preferências do usuário atualizadas com sucesso.',
+        success: true,
+        data: updatedPreferences,
+      };
+      return response;
+    } catch (err) {
+      console.log(err);
+      let response: ResponseI = {
+        message: 'Erro ao atualizar preferências do usuário, consulte o Log.',
+        success: false,
+      };
+      return response;
+    }
+  }
+
+  public static async getPreferences(userId: number): Promise<ResponseI> {
+    try {
+      let response: ResponseI = {
+        message: '',
+        success: false,
+      };
+
+      if (!userId) {
+        return (response = {
+          message: 'Id do usuário não informado!',
+          success: false,
+        });
+      }
+
+      const preferences: UserPreferencesI | null = await UserPreferences.findOne({
+        where: { userId: userId },
+      });
+
+      if (!preferences) {
+        return (response = {
+          message: 'Preferências do usuário não encontradas!',
+          success: false,
+        });
+      } else {
+        return (response = {
+          message: 'Preferências do usuário encontradas!',
+          success: true,
+          data: preferences,
+        });
+      }
+    } catch (err) {
+      console.log(err);
+      let response: ResponseI = {
+        message: 'Erro ao buscar preferências do usuário, consulte o Log.',
         success: false,
       };
       return response;

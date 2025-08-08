@@ -1,7 +1,7 @@
 import { Application } from 'express';
 import ProjectController from '../controllers/project.controller';
 import BasicMiddleware from '../middlewares/basic.middleware';
-import { uploadBanner } from '../configs/upload';
+import { upload } from '../configs/upload';
 
 export default class ProjectRoute {
   private controller: ProjectController = new ProjectController();
@@ -10,10 +10,10 @@ export default class ProjectRoute {
   public createInstances(app: Application) {
     app
       .route('/projects/create')
-      .post(this.middleware.validateToken, uploadBanner.single('banner'), this.controller.createProject);
+      .post(this.middleware.validateToken, upload.single('banner'), this.controller.createProject);
     app
       .route('/projects/update/:projectId')
-      .put(this.middleware.validateToken, uploadBanner.single('banner'), this.controller.updateProject);
+      .put(this.middleware.validateToken, upload.single('banner'), this.controller.updateProject);
     app.route('/projects/remove/:projectId').delete(this.middleware.validateToken, this.controller.removeProject);
 
     app.route('/projects/list').get(this.middleware.validateToken, this.controller.getProjects);

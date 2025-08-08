@@ -1,9 +1,5 @@
-import { UploadApiResponse } from 'cloudinary';
 import { ResponseI } from '../interfaces/response.interface';
 import { Project, ProjectI } from '../models/project.model';
-import { cloudinary } from '../configs/cloudinary';
-import { v4 as uuidv4 } from 'uuid';
-import streamifier from 'streamifier';
 import { ProjectMemberI } from '../interfaces/project.interface';
 import { ProjectParticipation, ProjectParticipationI } from '../models/project_participation.model';
 import { ProjectStatus } from '../enums/project_status.enum';
@@ -14,7 +10,6 @@ import { Task } from '../models/task.models';
 import { TaskStatusEnum } from '../enums/status.enum';
 
 export default class ProjectService {
-  //crud dos projetos
   public static async create(project: ProjectI): Promise<ResponseI> {
     try {
       let response: ResponseI = {
