@@ -30,7 +30,6 @@ export default class TaskController {
       const newTask: TaskI = {
         versionId: task.versionId,
         assigneeId: task.assigneeId,
-        parentTaskId: task.parentTaskId,
         title: task.title,
         description: task.description,
         priority: task.priority,
@@ -132,7 +131,6 @@ export default class TaskController {
         id: taskId,
         versionId: task.versionId,
         assigneeId: task.assigneeId,
-        parentTaskId: task.parentTaskId,
         title: task.title,
         description: task.description,
         priority: task.priority,

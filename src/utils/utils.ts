@@ -7,3 +7,7 @@ export const getUsernameInitials = (username: string): string => {
     return names[0].charAt(0).toUpperCase() + names[names.length - 1].charAt(0).toUpperCase();
   }
 };
+
+export const clone = (obj: any) => {
+  return JSON.parse(JSON.stringify(obj));
+};

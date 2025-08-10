@@ -8,6 +8,7 @@ import { Version } from '../models/version.model';
 import { Tag, TagI } from '../models/tag.model';
 import { Task } from '../models/task.models';
 import { TaskStatusEnum } from '../enums/status.enum';
+import { clone } from '../utils/utils';
 
 export default class ProjectService {
   public static async create(project: ProjectI): Promise<ResponseI> {
@@ -191,7 +192,7 @@ export default class ProjectService {
         return response;
       }
 
-      const project: ProjectI | null = await Project.findOne({
+      const project = await Project.findOne({
         where: { id: projectId },
         include: [
           {
@@ -238,6 +239,20 @@ export default class ProjectService {
         };
         return response;
       }
+
+      let totalTasks = 0;
+      let completedTasks = 0;
+
+      if (project.versions) {
+        for (const version of project.versions) {
+          if (version.tasks) {
+            totalTasks += version.tasks.length;
+            completedTasks += version.tasks.filter(task => task.status === TaskStatusEnum.DONE).length;
+          }
+        }
+      }
+
+      project.dataValues.progress = totalTasks > 0 ? completedTasks / totalTasks : 0;
 
       response = {
         message: 'Projeto encontrado com sucesso.',
@@ -293,15 +308,15 @@ export default class ProjectService {
         return response;
       }
 
-      const filteredProjects: ProjectI[] = projects
-        .filter(project => {
-          const isCreator = project.creatorId === userId;
-          const isParticipant = project.participation?.some(
-            (participation: ProjectParticipationI) => participation.userId === userId
-          );
-          return isCreator || isParticipant;
-        })
-        .map(project => project.dataValues);
+      const plainProjects: ProjectI[] = clone(projects);
+
+      const filteredProjects: ProjectI[] = plainProjects.filter(project => {
+        const isCreator = project.creatorId === userId;
+        const isParticipant = project.participation?.some(
+          (participation: ProjectParticipationI) => participation.userId === userId
+        );
+        return isCreator || isParticipant;
+      });
 
       if (filteredProjects.length === 0) {
         response = {

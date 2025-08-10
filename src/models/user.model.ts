@@ -44,7 +44,20 @@ export class User extends Model implements UserI {
   lastAcess?: Date | null;
 
   @AllowNull(true)
-  @Column({ type: DataType.STRING })
+  @Column({
+    type: DataType.STRING,
+    get(this: User) {
+      const rawValue = this.getDataValue('image');
+
+      if (!rawValue) {
+        return null;
+      }
+
+      const baseUrl = process.env.API_BASE_URL || 'http://localhost:3000';
+
+      return `${baseUrl}/uploads/${rawValue}`;
+    },
+  })
   image?: string | null;
 
   @HasOne(() => UserPreferences)

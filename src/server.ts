@@ -8,8 +8,14 @@ import path from 'path';
 const app = express();
 const router = new ExpressRouter();
 
+const corsOptions = {
+  origin: process.env.FRONT_END_URL,
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  optionsSuccessStatus: 204,
+};
+
 // Middlewares
-app.use(cors());
+app.use(cors(corsOptions));
 app.use((req, res, next) => {
   const contentType = req.headers['content-type'];
 

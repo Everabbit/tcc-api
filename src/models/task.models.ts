@@ -24,8 +24,6 @@ export interface TaskI {
   version?: VersionI;
   assigneeId?: number;
   assignee?: UserI;
-  parentTaskId?: number;
-  parentTask?: TaskI;
   title: string;
   description?: string;
   priority: PriorityEnum;
@@ -65,14 +63,6 @@ export class Task extends Model implements TaskI {
 
   @BelongsTo(() => User, 'assigneeId')
   assignee?: UserI;
-
-  @ForeignKey(() => Task)
-  @AllowNull(true)
-  @Column(DataType.INTEGER)
-  parentTaskId?: number;
-
-  @BelongsTo(() => Task, 'parentTaskId')
-  parentTask?: TaskI;
 
   @AllowNull(false)
   @Column(DataType.TEXT)

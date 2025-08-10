@@ -22,6 +22,6 @@ export default class UserRoute {
     app.route('/users/updatepreferences').put(this.middleware.validateToken, this.controller.updatePreferences);
     app.route('/users/preferences').get(this.middleware.validateToken, this.controller.getPreferences);
     app.route('/users/basicinfo').get(this.middleware.validateToken, this.controller.getBasicInfoUser);
-    app.route('/users/basicinfolist').get(this.middleware.validateToken, this.controller.getBasicUserList);
+    app.route('/users/basicinfolist/:username').get(this.middleware.validateToken, this.controller.getBasicUserList);
   }
 }

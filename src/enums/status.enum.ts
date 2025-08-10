@@ -1,10 +1,9 @@
 export enum TaskStatusEnum {
   PENDING = 1, // Aguardando início
   IN_PROGRESS = 2, // Em andamento
-  BLOCKED = 3, // Travada por algum motivo
-  REVIEW = 4, // Em revisão
-  DONE = 5, // Finalizada
-  CANCELED = 6, // Cancelada
+  REVIEW = 3, // Em testes
+  DONE = 4, // Concluída
+  CANCELED = 5, // Cancelada
 }
 
 export enum VersionStatusEnum {

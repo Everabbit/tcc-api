@@ -60,7 +60,20 @@ export class Project extends Model implements ProjectI {
   status!: ProjectStatus;
 
   @AllowNull(true)
-  @Column({ type: DataType.TEXT })
+  @Column({
+    type: DataType.TEXT,
+    get(this: Project) {
+      const rawValue = this.getDataValue('banner');
+
+      if (!rawValue) {
+        return null;
+      }
+
+      const baseUrl = process.env.API_BASE_URL || 'http://localhost:3000';
+
+      return `${baseUrl}/uploads/${rawValue}`;
+    },
+  })
   banner?: string | undefined;
 
   @AllowNull(true)

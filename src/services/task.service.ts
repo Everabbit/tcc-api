@@ -30,7 +30,6 @@ export default class TaskService {
       const newTask = await Task.create({
         versionId: task.versionId,
         assigneeId: task.assigneeId,
-        parentTaskId: task.parentTaskId,
         title: task.title,
         description: task.description,
         priority: task.priority,
@@ -89,7 +88,6 @@ export default class TaskService {
         {
           versionId: task.versionId,
           assigneeId: task.assigneeId,
-          parentTaskId: task.parentTaskId,
           title: task.title,
           description: task.description,
           priority: task.priority,

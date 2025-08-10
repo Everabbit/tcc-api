@@ -15,7 +15,7 @@ export const uploadFile = async (file: Express.Multer.File): Promise<string> => 
 
     fs.writeFileSync(filePath, file.buffer);
 
-    const fileUrl = `${process.env.API_BASE_URL}/uploads/${fileName}`;
+    const fileUrl = `${fileName}`;
 
     return fileUrl;
   } catch (error) {

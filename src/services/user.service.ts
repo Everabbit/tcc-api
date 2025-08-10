@@ -421,7 +421,6 @@ export default class UserService {
         message: '',
         success: false,
       };
-      console.log(password);
 
       if (!userId || !password) {
         response = {
@@ -707,7 +706,7 @@ export default class UserService {
     }
   }
 
-  public static async getUsersBasicList(): Promise<ResponseI> {
+  public static async getUsersBasicList(username: string): Promise<ResponseI> {
     try {
       let response: ResponseI = {
         message: '',
@@ -715,7 +714,14 @@ export default class UserService {
       };
 
       const users: UserI[] = await User.findAll({
+        where: {
+          username: {
+            [Op.iLike]: `%${username}%`,
+          },
+        },
         attributes: ['id', 'username', 'image'],
+        order: [['username', 'ASC']],
+        limit: 5,
       });
 
       if (!users) {
@@ -769,14 +775,6 @@ export default class UserService {
         {
           theme: userPreferences.theme || preferencesExists.theme,
           darkMode: userPreferences.darkMode !== undefined ? userPreferences.darkMode : preferencesExists.darkMode,
-          notifyEnabled:
-            userPreferences.notifyEnabled !== undefined
-              ? userPreferences.notifyEnabled
-              : preferencesExists.notifyEnabled,
-          notifyEmail:
-            userPreferences.notifyEmail !== undefined ? userPreferences.notifyEmail : preferencesExists.notifyEmail,
-          notifyPush:
-            userPreferences.notifyPush !== undefined ? userPreferences.notifyPush : preferencesExists.notifyPush,
         },
         { where: { userId: userPreferences.userId }, returning: true }
       );

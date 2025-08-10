@@ -94,7 +94,7 @@ export default class UserController {
           message: newUser.message,
           success: false,
         };
-        return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
+        return ResponseValidator.response(req, res, HttpStatus.OK, response);
       }
 
       const jwtToken: ResponseI = await UserService.signJwt(newUser.data);
@@ -522,7 +522,18 @@ export default class UserController {
         success: false,
       };
 
-      const user: ResponseI = await UserService.getUsersBasicList();
+      let username: string = req.params.username;
+
+      if (!username) {
+        response = {
+          message: 'Nome de usuário não informado!',
+          success: false,
+        };
+      }
+
+      username = fromBase64(username);
+
+      const user: ResponseI = await UserService.getUsersBasicList(username);
 
       if (!user.success) {
         response = {

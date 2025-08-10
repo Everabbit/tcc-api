@@ -47,7 +47,20 @@ export class Attachment extends Model<AttachmentI> {
   fileName!: string;
 
   @AllowNull(false)
-  @Column(DataType.STRING)
+  @Column({
+    type: DataType.STRING,
+    get(this: Attachment) {
+      const rawValue = this.getDataValue('url');
+
+      if (!rawValue) {
+        return null;
+      }
+
+      const baseUrl = process.env.API_BASE_URL || 'http://localhost:3000';
+
+      return `${baseUrl}/uploads/${rawValue}`;
+    },
+  })
   url!: string;
 
   @AllowNull(false)

@@ -17,9 +17,6 @@ export interface UserPreferencesI {
   user?: UserI;
   theme?: string;
   darkMode?: boolean;
-  notifyEnabled?: boolean;
-  notifyEmail?: boolean;
-  notifyPush?: boolean;
 }
 
 @Table({
@@ -48,16 +45,4 @@ export class UserPreferences extends Model implements UserPreferencesI {
   @AllowNull(true)
   @Column({ type: DataType.BOOLEAN, defaultValue: true })
   darkMode?: boolean;
-
-  @AllowNull(true)
-  @Column({ type: DataType.BOOLEAN, defaultValue: true })
-  notifyEnabled?: boolean;
-
-  @AllowNull(true)
-  @Column({ type: DataType.BOOLEAN, defaultValue: true })
-  notifyEmail?: boolean;
-
-  @AllowNull(true)
-  @Column({ type: DataType.BOOLEAN, defaultValue: true })
-  notifyPush?: boolean;
 }
