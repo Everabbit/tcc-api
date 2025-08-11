@@ -5,6 +5,8 @@ import ResponseValidator from '../utils/reponse.utils';
 import { HttpStatus } from '../enums/res_status.enum';
 import { VersionCreateI } from '../interfaces/version.interface';
 import VersionService from '../services/version.service';
+import { verifyPermission } from '../utils/roles.utils';
+import { RolesEnum } from '../enums/roles.enum';
 
 export default class VersionController {
   public async createVersion(req: Request, res: Response) {
@@ -67,8 +69,19 @@ export default class VersionController {
         success: false,
       };
 
+      const userId: number = parseInt(req.params.userId);
       const versionId: number = parseInt(req.params.versionId);
       const version: VersionCreateI = JSON.parse(req.body.version);
+
+      const hasPermission: boolean = await verifyPermission(version.projectId, userId, RolesEnum.ADMIN);
+
+      if (!hasPermission) {
+        response = {
+          message: 'Você não tem permissão para remover este projeto.',
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.UNAUTHORIZED, response);
+      }
 
       if (!versionId) {
         response = {
@@ -121,6 +134,8 @@ export default class VersionController {
         success: false,
       };
 
+      const userId: number = parseInt(req.params.userId);
+      const projectId: number = parseInt(req.params.projectId);
       const versionId: number = parseInt(req.params.versionId);
 
       if (!versionId) {

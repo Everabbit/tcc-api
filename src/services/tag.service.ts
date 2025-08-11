@@ -178,9 +178,9 @@ export default class TagService {
         where: { projectId: projectId },
       });
 
-      if (!tags || tags.length === 0) {
+      if (!tags) {
         response = {
-          message: 'Nenhuma tag encontrada para este projeto.',
+          message: 'Erro ao procurar tags para o projeto.',
           success: false,
         };
         return response;

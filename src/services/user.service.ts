@@ -4,6 +4,9 @@ import { User, UserI } from '../models/user.model';
 import { UserPreferences, UserPreferencesI } from '../models/user_preferences.model';
 import { deleteFile, uploadFile } from '../utils/files.utils';
 import { PasswordChangeI } from '../interfaces/password.interface';
+import { Project } from '../models/project.model';
+import { ProjectParticipation } from '../models/project_participation.model';
+import { RolesEnum } from '../enums/roles.enum';
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
@@ -837,6 +840,63 @@ export default class UserService {
       console.log(err);
       let response: ResponseI = {
         message: 'Erro ao buscar preferências do usuário, consulte o Log.',
+        success: false,
+      };
+      return response;
+    }
+  }
+
+  public static async getProjectRole(userId: number, projectId: number): Promise<ResponseI> {
+    try {
+      let response: ResponseI = {
+        message: '',
+        success: false,
+      };
+
+      if (!userId || !projectId) {
+        return (response = {
+          message: 'Dados incompletos para buscar a função do usuário no projeto!',
+          success: false,
+        });
+      }
+
+      const project = await Project.findByPk(projectId);
+
+      if (!project) {
+        return (response = {
+          message: 'Projeto não encontrado!',
+          success: false,
+        });
+      }
+
+      if (project.creatorId === userId) {
+        return (response = {
+          message: 'Usuário é o criador do projeto!',
+          success: true,
+          data: RolesEnum.ADMIN,
+        });
+      }
+
+      const participation = await ProjectParticipation.findOne({
+        where: { userId: userId, projectId: projectId },
+      });
+
+      if (participation) {
+        return (response = {
+          message: 'Usuário é membro do projeto!',
+          success: true,
+          data: participation.role,
+        });
+      }
+
+      return (response = {
+        message: 'Usuário não tem função neste projeto!',
+        success: false,
+      });
+    } catch (err) {
+      console.log(err);
+      let response: ResponseI = {
+        message: 'Erro ao buscar função do usuário no projeto, consulte o Log.',
         success: false,
       };
       return response;

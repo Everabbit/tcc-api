@@ -46,7 +46,7 @@ export class Comment extends Model implements CommentI {
 
   @AllowNull(false)
   @ForeignKey(() => User)
-  @Column({ type: DataType.INTEGER })
+  @Column({ type: DataType.INTEGER, onDelete: 'CASCADE' })
   authorId!: number;
 
   @BelongsTo(() => User)

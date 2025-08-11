@@ -658,4 +658,49 @@ export default class UserController {
       return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
     }
   }
+
+  public async getUserRole(req: Request, res: Response) {
+    try {
+      let response: ResponseI = {
+        message: '',
+        success: false,
+      };
+
+      const userId: number = parseInt(req.params.userId);
+      const projectId: number = parseInt(req.params.projectId);
+
+      if (!userId || !projectId) {
+        response = {
+          message: 'Dados incompletos para buscar a função do usuário no projeto!',
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.BAD_REQUEST, response);
+      }
+
+      const role: ResponseI = await UserService.getProjectRole(userId, projectId);
+
+      if (!role.success) {
+        response = {
+          message: role.message,
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.NOT_FOUND, response);
+      }
+
+      response = {
+        message: 'Função do usuário no projeto encontrada!',
+        success: true,
+        data: role.data,
+      };
+      return ResponseValidator.response(req, res, HttpStatus.OK, response);
+    } catch (err) {
+      console.log(err);
+      const response: ResponseI = {
+        message: `Erro: ${err}`,
+        success: false,
+        data: false,
+      };
+      return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
+    }
+  }
 }

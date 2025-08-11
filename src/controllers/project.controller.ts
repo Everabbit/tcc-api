@@ -7,6 +7,8 @@ import { ProjectI } from '../models/project.model';
 import { ProjectCreateI, ProjectMemberI } from '../interfaces/project.interface';
 import { ProjectStatus } from '../enums/project_status.enum';
 import { deleteFile, uploadFile } from '../utils/files.utils';
+import { RolesEnum } from '../enums/roles.enum';
+import { verifyPermission } from '../utils/roles.utils';
 
 export default class ProjectController {
   public async createProject(req: Request, res: Response) {
@@ -56,7 +58,7 @@ export default class ProjectController {
 
       const admin: ProjectMemberI = {
         id: userId,
-        role: 1,
+        role: RolesEnum.ADMIN,
       };
       const adminAdded: ResponseI = await ProjectService.addUserOnProject(projectCreated.data.id, admin);
       if (!adminAdded.success) {
@@ -97,9 +99,20 @@ export default class ProjectController {
         success: false,
       };
 
+      const userId: number = parseInt(req.params.userId);
       const projectId: number = parseInt(req.params.projectId);
       const project: ProjectI = JSON.parse(req.body.project);
       const banner: Express.Multer.File | undefined = req.file;
+
+      const hasPermission: boolean = await verifyPermission(projectId, userId, RolesEnum.MANAGER);
+
+      if (!hasPermission) {
+        response = {
+          message: 'Você não tem permissão para atualizar este projeto.',
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.UNAUTHORIZED, response);
+      }
 
       if (!projectId) {
         response = {
@@ -164,6 +177,16 @@ export default class ProjectController {
 
       const userId: number = parseInt(req.params.userId);
       const projectId: number = parseInt(req.params.projectId);
+
+      const hasPermission: boolean = await verifyPermission(projectId, userId, RolesEnum.ADMIN);
+
+      if (!hasPermission) {
+        response = {
+          message: 'Você não tem permissão para remover este projeto.',
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.UNAUTHORIZED, response);
+      }
 
       if (!projectId) {
         response = {

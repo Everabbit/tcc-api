@@ -320,8 +320,9 @@ export default class ProjectService {
 
       if (filteredProjects.length === 0) {
         response = {
-          message: 'Nenhum projeto encontrado para este usuário.',
-          success: false,
+          message: 'Projetos encontrados com sucesso.',
+          success: true,
+          data: filteredProjects,
         };
         return response;
       }

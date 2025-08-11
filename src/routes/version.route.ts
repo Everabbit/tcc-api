@@ -9,7 +9,9 @@ export default class VersionRoute {
   public createInstances(app: Application) {
     app.route('/versions/create').post(this.middleware.validateToken, this.controller.createVersion);
     app.route('/versions/update/:versionId').put(this.middleware.validateToken, this.controller.updateVersion);
-    app.route('/versions/remove/:versionId').delete(this.middleware.validateToken, this.controller.removeVersion);
+    app
+      .route('/versions/remove/:projectId/:versionId')
+      .delete(this.middleware.validateToken, this.controller.removeVersion);
     app.route('/versions/get/:projectId/:versionId').get(this.middleware.validateToken, this.controller.getOneVersion);
     app.route('/versions/list/:projectId').get(this.middleware.validateToken, this.controller.getAllVersions);
   }

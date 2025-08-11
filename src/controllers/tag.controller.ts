@@ -3,6 +3,9 @@ import TagService from '../services/tag.service';
 import { ResponseI } from '../interfaces/response.interface';
 import ResponseValidator from '../utils/reponse.utils';
 import { HttpStatus } from '../enums/res_status.enum';
+import { verifyPermission } from '../utils/roles.utils';
+import { TagI } from '../models/tag.model';
+import { RolesEnum } from '../enums/roles.enum';
 
 export default class TagController {
   public async createTag(req: Request, res: Response) {
@@ -12,7 +15,10 @@ export default class TagController {
         success: false,
       };
 
-      const tag = req.body;
+      const userId: number = req.body.userId;
+      const tag: TagI = req.body;
+
+      const hasPermission: boolean = await verifyPermission(tag.projectId, userId, RolesEnum.MANAGER);
 
       if (!tag || !tag.name || !tag.projectId) {
         response = {
