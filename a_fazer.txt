@@ -12,8 +12,6 @@ Confirmação de e-mail na alteração de e-mail
 Sockets em geral
 Tempo de expiração da sessão
 Tela de Dashboard completa
-adicionar botão de logout
-adicionar perfil do usuário no comentário da tarefa
 
 
 Bugs:

@@ -12,6 +12,7 @@ import {
 } from 'sequelize-typescript';
 import { Task, TaskI } from './task.models';
 import { User, UserI } from './user.model';
+import { RolesEnum } from '../enums/roles.enum';
 
 export interface CommentI {
   id?: number;
@@ -19,6 +20,7 @@ export interface CommentI {
   task?: TaskI;
   authorId: number;
   author?: UserI;
+  authorRole?: RolesEnum;
   content: string;
   edited: boolean;
   createdAt?: Date;
@@ -51,6 +53,10 @@ export class Comment extends Model implements CommentI {
 
   @BelongsTo(() => User)
   author?: UserI;
+
+  @AllowNull(true)
+  @Column({ type: DataType.INTEGER })
+  authorRole?: RolesEnum;
 
   @AllowNull(false)
   @Column({ type: DataType.TEXT })

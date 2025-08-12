@@ -757,6 +757,7 @@ export default class TaskService {
       const createdComment = await Comment.create({
         taskId: comment.taskId,
         authorId: comment.authorId,
+        authorRole: comment.authorRole,
         content: comment.content,
         edited: !!comment.edited,
       });
@@ -872,6 +873,7 @@ export default class TaskService {
       const [rowsAffected, [updatedComment]] = await Comment.update(
         {
           content: comment.content,
+          authorRole: comment.authorRole,
           edited: true,
         },
         { where: { id: comment.id }, returning: true }
