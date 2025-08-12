@@ -9,6 +9,7 @@ import { AttachmentI } from '../models/attachment.model';
 import { CommentI } from '../models/comment.model';
 import { verifyPermission } from '../utils/roles.utils';
 import { RolesEnum } from '../enums/roles.enum';
+import VersionService from '../services/version.service';
 
 export default class TaskController {
   public async createTask(req: Request, res: Response) {
@@ -21,6 +22,7 @@ export default class TaskController {
       const userId: number = parseInt(req.params.userId);
       const task: TaskI = JSON.parse(req.body.task);
       const attachments = req.files as Express.Multer.File[];
+      const projectId: number = parseInt(req.params.projectId);
 
       if (!task) {
         response = {
@@ -30,7 +32,7 @@ export default class TaskController {
         return ResponseValidator.response(req, res, HttpStatus.BAD_REQUEST, response);
       }
 
-      const hasPermission: boolean = await verifyPermission(task.versionId, userId, RolesEnum.DEVELOPER);
+      const hasPermission: boolean = await verifyPermission(projectId, userId, RolesEnum.DEVELOPER);
 
       if (!hasPermission) {
         response = {
@@ -128,9 +130,11 @@ export default class TaskController {
         success: false,
       };
 
+      const userId: number = parseInt(req.params.userId);
       const taskId: number = parseInt(req.params.taskId);
       const task: TaskI = JSON.parse(req.body.task);
       const attachments = req.files as Express.Multer.File[];
+      const projectId: number = parseInt(req.params.projectId);
 
       if (!taskId) {
         response = {
@@ -138,6 +142,16 @@ export default class TaskController {
           success: false,
         };
         return ResponseValidator.response(req, res, HttpStatus.BAD_REQUEST, response);
+      }
+
+      const hasPermission: boolean = await verifyPermission(projectId, userId, RolesEnum.DEVELOPER);
+
+      if (!hasPermission) {
+        response = {
+          message: 'Você não tem permissão para atualizar esta tarefa nesta versão.',
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.UNAUTHORIZED, response);
       }
 
       const updatedTask: TaskI = {
@@ -263,6 +277,8 @@ export default class TaskController {
         success: false,
       };
 
+      const userId: number = parseInt(req.params.userId);
+      const projectId: number = parseInt(req.params.projectId);
       const taskId: number = parseInt(req.params.taskId);
 
       if (!taskId) {
@@ -271,6 +287,16 @@ export default class TaskController {
           success: false,
         };
         return ResponseValidator.response(req, res, HttpStatus.BAD_REQUEST, response);
+      }
+
+      const hasPermission: boolean = await verifyPermission(projectId, userId, RolesEnum.DEVELOPER);
+
+      if (!hasPermission) {
+        response = {
+          message: 'Você não tem permissão para remover esta tarefa.',
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.UNAUTHORIZED, response);
       }
 
       const taskDeleted: ResponseI = await TaskService.delete(taskId);
@@ -341,6 +367,7 @@ export default class TaskController {
         success: false,
       };
 
+      const userId: number = parseInt(req.params.userId);
       const taskId: number = parseInt(req.params.taskId);
       const newStatus: TaskStatusEnum = req.body.status;
 
@@ -348,8 +375,31 @@ export default class TaskController {
         response = {
           message: 'Dados incompletos para atualizar o status da tarefa.',
           success: false,
+          data: false,
         };
         return ResponseValidator.response(req, res, HttpStatus.BAD_REQUEST, response);
+      }
+
+      const version: ResponseI = await VersionService.get(taskId);
+
+      if (!version.success) {
+        response = {
+          message: version.message,
+          success: false,
+          data: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.NOT_FOUND, response);
+      }
+
+      const hasPermission: boolean = await verifyPermission(version.data.projectId, userId, RolesEnum.DEVELOPER);
+
+      if (!hasPermission) {
+        response = {
+          message: 'Você não tem permissão para atualizar o status desta tarefa.',
+          success: false,
+          data: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.UNAUTHORIZED, response);
       }
 
       const taskUpdated: ResponseI = await TaskService.updateStatus(taskId, newStatus);
@@ -358,6 +408,7 @@ export default class TaskController {
         response = {
           message: taskUpdated.message,
           success: false,
+          data: false,
         };
         return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
       }
@@ -373,6 +424,7 @@ export default class TaskController {
       const response: ResponseI = {
         message: `Erro: ${err}`,
         success: false,
+        data: false,
       };
       return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
     }
@@ -555,7 +607,9 @@ export default class TaskController {
         success: false,
       };
 
+      const userId: number = parseInt(req.params.userId);
       const attachmentId: number = parseInt(req.params.attachmentId);
+      const projectId: number = parseInt(req.params.projectId);
 
       if (!attachmentId) {
         response = {
@@ -563,6 +617,16 @@ export default class TaskController {
           success: false,
         };
         return ResponseValidator.response(req, res, HttpStatus.BAD_REQUEST, response);
+      }
+
+      const hasPermission: boolean = await verifyPermission(projectId, userId, RolesEnum.DEVELOPER);
+
+      if (!hasPermission) {
+        response = {
+          message: 'Você não tem permissão para remover este anexo.',
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.UNAUTHORIZED, response);
       }
 
       const attachmentRemoved: ResponseI = await TaskService.removeFile(attachmentId);

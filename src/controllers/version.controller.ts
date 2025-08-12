@@ -252,7 +252,7 @@ export default class VersionController {
         return ResponseValidator.response(req, res, HttpStatus.BAD_REQUEST, response);
       }
 
-      const version: ResponseI = await VersionService.get(projectId, versionId);
+      const version: ResponseI = await VersionService.get(versionId);
 
       if (!version.success) {
         response = {

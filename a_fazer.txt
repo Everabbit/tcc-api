@@ -1,7 +1,6 @@
 Ainda é necessário no TCC:
 
 Criptografar dados pessoais do usuário (em trânsito e em repouso)
-Diferentes perfis de usuários no projeto
 Ajustar status dos projetos (remover 'inativo', adicionar 'planejado' e 'encerrado')
 Impedir edição de projeto 'encerrado'
 Adicionar sistema de E-mail
@@ -14,6 +13,7 @@ Sockets em geral
 Tempo de expiração da sessão
 Tela de Dashboard completa
 adicionar botão de logout
+adicionar perfil do usuário no comentário da tarefa
 
 
 Bugs:

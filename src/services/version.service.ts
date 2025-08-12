@@ -216,14 +216,14 @@ export default class VersionService {
     }
   }
 
-  public static async get(projectId: number, versionId: number): Promise<ResponseI> {
+  public static async get(versionId: number): Promise<ResponseI> {
     try {
       let response: ResponseI = {
         message: '',
         success: false,
       };
 
-      if (!projectId || !versionId) {
+      if (!versionId) {
         response = {
           message: 'Id do projeto ou da versão não informado.',
           success: false,
@@ -232,7 +232,7 @@ export default class VersionService {
       }
 
       const version: VersionI | null = await Version.findOne({
-        where: { id: versionId, projectId: projectId },
+        where: { id: versionId },
       });
 
       if (!version) {

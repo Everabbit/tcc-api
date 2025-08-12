@@ -543,6 +543,12 @@ export default class TaskService {
           },
           {
             model: TaskTag,
+            include: [
+              {
+                model: Tag,
+                attributes: ['id', 'name', 'color'],
+              },
+            ],
           },
           {
             model: Version,

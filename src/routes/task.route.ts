@@ -9,12 +9,12 @@ export default class TaskRoute {
 
   public createInstances(app: Application) {
     app
-      .route('/tasks/create')
+      .route('/tasks/create/:projectId')
       .post(this.middleware.validateToken, upload.array('attachment'), this.controller.createTask);
     app
-      .route('/tasks/update/:taskId')
+      .route('/tasks/update/:projectId/:taskId')
       .put(this.middleware.validateToken, upload.array('attachment'), this.controller.updateTask);
-    app.route('/tasks/delete/:taskId').delete(this.middleware.validateToken, this.controller.deleteTask);
+    app.route('/tasks/delete/:projectId/:taskId').delete(this.middleware.validateToken, this.controller.deleteTask);
     app.route('/tasks/getall/:versionId').get(this.middleware.validateToken, this.controller.getAllTasks);
     app.route('/tasks/updatestatus/:taskId').put(this.middleware.validateToken, this.controller.updateStatusTask);
     app.route('/tasks/get/:taskId').get(this.middleware.validateToken, this.controller.getTask);
@@ -22,7 +22,7 @@ export default class TaskRoute {
     app.route('/tasks/removecomment/:commentId').delete(this.middleware.validateToken, this.controller.removeComment);
     app.route('/tasks/updatecomment').put(this.middleware.validateToken, this.controller.updateComment);
     app
-      .route('/tasks/removeattachment/:attachmentId')
+      .route('/tasks/removeattachment/:projectId/:attachmentId')
       .delete(this.middleware.validateToken, this.controller.deleteAttachment);
   }
 }
