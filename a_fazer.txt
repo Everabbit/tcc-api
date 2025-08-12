@@ -2,7 +2,6 @@ Ainda é necessário no TCC:
 
 Criptografar dados pessoais do usuário (em trânsito e em repouso)
 Diferentes perfis de usuários no projeto
-Editar permissão do usuário no projeto
 Ajustar status dos projetos (remover 'inativo', adicionar 'planejado' e 'encerrado')
 Impedir edição de projeto 'encerrado'
 Adicionar sistema de E-mail

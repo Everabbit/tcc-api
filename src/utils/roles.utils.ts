@@ -6,13 +6,14 @@ export const verifyPermission = async (projectId: number, userId: number, role: 
   if (!userRole.success) {
     return false;
   }
-  if (userRole.data.role === RolesEnum.ADMIN) {
+
+  if (userRole.data === RolesEnum.ADMIN) {
     return true;
   }
 
-  if (userRole.data.role === RolesEnum.MANAGER) {
+  if (userRole.data === RolesEnum.MANAGER) {
     return role === RolesEnum.MANAGER || role === RolesEnum.DEVELOPER || role === RolesEnum.ANALYST;
   }
 
-  return userRole.data.role === role;
+  return userRole.data === role;
 };

@@ -9,7 +9,7 @@ export default class TagRoute {
   public createInstances(app: Application) {
     app.route('/tags/createtag').post(this.middleware.validateToken, this.controller.createTag);
     app.route('/tags/updatetag').put(this.middleware.validateToken, this.controller.updateTag);
-    app.route('/tags/deletetag/:tagId').delete(this.middleware.validateToken, this.controller.deleteTag);
+    app.route('/tags/deletetag/:projectId/:tagId').delete(this.middleware.validateToken, this.controller.deleteTag);
     app.route('/tags/getall/:projectId').get(this.middleware.validateToken, this.controller.getAllTags);
   }
 }

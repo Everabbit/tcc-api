@@ -9,6 +9,9 @@ import { ProjectStatus } from '../enums/project_status.enum';
 import { deleteFile, uploadFile } from '../utils/files.utils';
 import { RolesEnum } from '../enums/roles.enum';
 import { verifyPermission } from '../utils/roles.utils';
+import { ProjectParticipationI } from '../models/project_participation.model';
+import UserService from '../services/user.service';
+import { User } from '../models/user.model';
 
 export default class ProjectController {
   public async createProject(req: Request, res: Response) {
@@ -21,6 +24,14 @@ export default class ProjectController {
       const userId: number = parseInt(req.params.userId);
       const project: ProjectCreateI = JSON.parse(req.body.project);
       const banner: Express.Multer.File | undefined = req.file;
+
+      if (!project || !project.name) {
+        response = {
+          message: 'Dados incompletos para criar projeto.',
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.BAD_REQUEST, response);
+      }
 
       if (!userId) {
         response = {
@@ -56,9 +67,9 @@ export default class ProjectController {
         return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
       }
 
-      const admin: ProjectMemberI = {
-        id: userId,
+      const admin: ProjectParticipationI = {
         role: RolesEnum.ADMIN,
+        userId: userId,
       };
       const adminAdded: ResponseI = await ProjectService.addUserOnProject(projectCreated.data.id, admin);
       if (!adminAdded.success) {
@@ -104,7 +115,7 @@ export default class ProjectController {
       const project: ProjectI = JSON.parse(req.body.project);
       const banner: Express.Multer.File | undefined = req.file;
 
-      const hasPermission: boolean = await verifyPermission(projectId, userId, RolesEnum.MANAGER);
+      const hasPermission: boolean = await verifyPermission(projectId, userId, RolesEnum.ADMIN);
 
       if (!hasPermission) {
         response = {
@@ -129,6 +140,8 @@ export default class ProjectController {
           await deleteFile(bannerUploadUrl);
         }
         bannerUploadUrl = await uploadFile(banner);
+      } else {
+        bannerUploadUrl = undefined;
       }
 
       const updatedProject: ProjectI = {
@@ -316,15 +329,16 @@ export default class ProjectController {
     }
   }
 
-  public async addUsersOnProject(req: Request, res: Response) {
+  public async addUserOnProject(req: Request, res: Response) {
     try {
       let response: ResponseI = {
         message: '',
         success: false,
       };
 
+      const userId: number = parseInt(req.params.userId);
       const projectId: number = parseInt(req.params.projectId);
-      const projectMembers: ProjectMemberI[] = JSON.parse(req.body.members);
+      const projectMember: ProjectParticipationI = req.body;
 
       if (!projectId) {
         response = {
@@ -334,28 +348,136 @@ export default class ProjectController {
         return ResponseValidator.response(req, res, HttpStatus.BAD_REQUEST, response);
       }
 
-      if (!projectMembers || projectMembers.length === 0) {
+      const hasPermission: boolean = await verifyPermission(projectId, userId, RolesEnum.MANAGER);
+
+      if (!hasPermission) {
         response = {
-          message: 'Membros do projeto não informados!',
+          message: 'Você não tem permissão para adicionar membros a este projeto.',
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.UNAUTHORIZED, response);
+      }
+
+      if (!projectMember) {
+        response = {
+          message: 'Membro do projeto não informado!',
           success: false,
         };
         return ResponseValidator.response(req, res, HttpStatus.BAD_REQUEST, response);
       }
 
-      for (const member of projectMembers) {
-        const addMemberResponse: ResponseI = await ProjectService.addUserOnProject(projectId, member);
-        if (!addMemberResponse.success) {
-          response = {
-            message: `Erro ao adicionar membro ${member.id}: ${addMemberResponse.message}`,
-            success: false,
-          };
-          return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
-        }
+      const userRole = await UserService.getProjectRole(userId, projectId);
+      const participationRole = await UserService.getProjectRole(projectMember.userId, projectId);
+
+      if (projectMember.role <= userRole.data || participationRole.data <= userRole.data) {
+        response = {
+          message: 'Você não pode atribuir uma função superior ou igual à sua.',
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.UNAUTHORIZED, response);
+      }
+
+      const addMemberResponse: ResponseI = await ProjectService.addUserOnProject(projectId, projectMember);
+      if (!addMemberResponse.success) {
+        response = {
+          message: `Erro ao adicionar membro ${projectMember.id}: ${addMemberResponse.message}`,
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
       }
 
       response = {
         message: 'Membros adicionados ao projeto com sucesso!',
         success: true,
+      };
+      return ResponseValidator.response(req, res, HttpStatus.OK, response);
+    } catch (err) {
+      console.log(err);
+      const response: ResponseI = {
+        message: `Erro: ${err}`,
+        success: false,
+      };
+      return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
+    }
+  }
+
+  public async updateUserOnProject(req: Request, res: Response) {
+    try {
+      let response: ResponseI = {
+        message: '',
+        success: false,
+      };
+
+      const userId: number = parseInt(req.params.userId);
+      const projectId: number = parseInt(req.params.projectId);
+      const projectMember: ProjectParticipationI = req.body;
+
+      if (!projectId) {
+        response = {
+          message: 'Id do projeto não informado!',
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.BAD_REQUEST, response);
+      }
+
+      const hasPermission: boolean = await verifyPermission(projectId, userId, RolesEnum.MANAGER);
+
+      if (!hasPermission) {
+        response = {
+          message: 'Você não tem permissão para atualizar membros deste projeto.',
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.UNAUTHORIZED, response);
+      }
+
+      if (!projectMember || !projectMember.userId || typeof projectMember.role !== 'number') {
+        response = {
+          message: 'Dados do membro do projeto incompletos!',
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.BAD_REQUEST, response);
+      }
+
+      if (projectMember.userId === userId) {
+        response = {
+          message: 'Você não pode alterar sua própria função.',
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.BAD_REQUEST, response);
+      }
+
+      const userRole = await UserService.getProjectRole(userId, projectId);
+      const participationRole = await UserService.getProjectRole(projectMember.userId, projectId);
+
+      if (!userRole.data || !participationRole.data) {
+        response = {
+          message: 'Não foi possível verificar as funções dos usuários no projeto.',
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
+      }
+
+      if (projectMember.role <= userRole.data || participationRole.data <= userRole.data) {
+        response = {
+          message: 'Você não pode atribuir uma função superior ou igual à sua.',
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.UNAUTHORIZED, response);
+      }
+
+      const updateMemberResponse: ResponseI = await ProjectService.updateUserOnProject(projectId, projectMember);
+      if (!updateMemberResponse.success) {
+        response = {
+          message: `Erro ao atualizar membro ${projectMember.userId}: ${updateMemberResponse.message}`,
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
+      }
+
+      response = {
+        message: 'Membro do projeto atualizado com sucesso!',
+        success: true,
+        data: updateMemberResponse.data,
       };
       return ResponseValidator.response(req, res, HttpStatus.OK, response);
     } catch (err) {
@@ -375,10 +497,11 @@ export default class ProjectController {
         success: false,
       };
 
+      const userId: number = parseInt(req.params.userId);
       const projectId: number = parseInt(req.params.projectId);
-      const userId: number = parseInt(req.params.participationId);
+      const participationId: number = parseInt(req.params.participationId);
 
-      if (!projectId || !userId) {
+      if (!projectId || !participationId) {
         response = {
           message: 'Dados incompletos para remover membro do projeto.',
           success: false,
@@ -386,7 +509,17 @@ export default class ProjectController {
         return ResponseValidator.response(req, res, HttpStatus.BAD_REQUEST, response);
       }
 
-      const removeMemberResponse: ResponseI = await ProjectService.removeUserFromProject(projectId, userId);
+      const hasPermission: boolean = await verifyPermission(projectId, userId, RolesEnum.MANAGER);
+
+      if (!hasPermission) {
+        response = {
+          message: 'Você não tem permissão para remover membros deste projeto.',
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.UNAUTHORIZED, response);
+      }
+
+      const removeMemberResponse: ResponseI = await ProjectService.removeUserFromProject(projectId, participationId);
 
       if (!removeMemberResponse.success) {
         response = {

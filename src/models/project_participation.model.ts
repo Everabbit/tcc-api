@@ -18,10 +18,10 @@ export interface ProjectParticipationI {
   id?: number;
   userId: number;
   user?: UserI;
-  projectId: number;
+  projectId?: number;
   project?: ProjectI;
   role: RolesEnum;
-  invitedAt: Date;
+  invitedAt?: Date;
   acceptedAt?: Date | null;
 }
 

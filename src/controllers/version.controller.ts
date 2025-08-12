@@ -19,6 +19,16 @@ export default class VersionController {
       const userId: number = parseInt(req.params.userId);
       const version: VersionCreateI = JSON.parse(req.body.version);
 
+      const hasPermission: boolean = await verifyPermission(version.projectId, userId, RolesEnum.MANAGER);
+
+      if (!hasPermission) {
+        response = {
+          message: 'Você não tem permissão para criar uma versão neste projeto.',
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.UNAUTHORIZED, response);
+      }
+
       if (!userId) {
         response = {
           message: 'Id do usuário não informado!',
@@ -77,7 +87,7 @@ export default class VersionController {
 
       if (!hasPermission) {
         response = {
-          message: 'Você não tem permissão para remover este projeto.',
+          message: 'Você não tem permissão para atualizar essa versão',
           success: false,
         };
         return ResponseValidator.response(req, res, HttpStatus.UNAUTHORIZED, response);
@@ -137,6 +147,16 @@ export default class VersionController {
       const userId: number = parseInt(req.params.userId);
       const projectId: number = parseInt(req.params.projectId);
       const versionId: number = parseInt(req.params.versionId);
+
+      const hasPermission: boolean = await verifyPermission(projectId, userId, RolesEnum.ADMIN);
+
+      if (!hasPermission) {
+        response = {
+          message: 'Você não tem permissão para remover essa versão.',
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.UNAUTHORIZED, response);
+      }
 
       if (!versionId) {
         response = {

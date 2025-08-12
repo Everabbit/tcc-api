@@ -18,7 +18,10 @@ export default class ProjectRoute {
 
     app.route('/projects/list').get(this.middleware.validateToken, this.controller.getProjects);
     app.route('/projects/:projectId').get(this.middleware.validateToken, this.controller.getProject);
-    app.route('/projects/addusers/:projectId').post(this.middleware.validateToken, this.controller.addUsersOnProject);
+    app.route('/projects/adduser/:projectId').post(this.middleware.validateToken, this.controller.addUserOnProject);
+    app
+      .route('/projects/updateuser/:projectId')
+      .put(this.middleware.validateToken, this.controller.updateUserOnProject);
     app
       .route('/projects/removeuser/:projectId/:participationId')
       .delete(this.middleware.validateToken, this.controller.removeUserFromProject);

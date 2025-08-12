@@ -1,10 +1,11 @@
 import { RolesEnum } from '../enums/roles.enum';
+import { ProjectParticipationI } from '../models/project_participation.model';
 
 export interface ProjectCreateI {
   name: string;
   description?: string;
   deadline?: string;
-  members?: ProjectMemberI[];
+  members?: ProjectParticipationI[];
 }
 
 export interface ProjectMemberI {

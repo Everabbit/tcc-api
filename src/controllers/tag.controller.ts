@@ -15,10 +15,18 @@ export default class TagController {
         success: false,
       };
 
-      const userId: number = req.body.userId;
+      const userId: number = parseInt(req.params.userId);
       const tag: TagI = req.body;
 
-      const hasPermission: boolean = await verifyPermission(tag.projectId, userId, RolesEnum.MANAGER);
+      const hasPermission: boolean = await verifyPermission(tag.projectId, userId, RolesEnum.DEVELOPER);
+
+      if (!hasPermission) {
+        response = {
+          message: 'Você não tem permissão para criar uma tag neste projeto.',
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.UNAUTHORIZED, response);
+      }
 
       if (!tag || !tag.name || !tag.projectId) {
         response = {
@@ -61,7 +69,18 @@ export default class TagController {
         success: false,
       };
 
+      const userId: number = parseInt(req.params.userId);
       const tag = req.body;
+
+      const hasPermission: boolean = await verifyPermission(tag.projectId, userId, RolesEnum.DEVELOPER);
+
+      if (!hasPermission) {
+        response = {
+          message: 'Você não tem permissão para atualizar esta tag neste projeto.',
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.UNAUTHORIZED, response);
+      }
 
       if (!tag || !tag.id) {
         response = {
@@ -104,7 +123,19 @@ export default class TagController {
         success: false,
       };
 
+      const userId: number = parseInt(req.params.userId);
       const tagId: number = parseInt(req.params.tagId);
+      const projectId: number = parseInt(req.params.projectId);
+
+      const hasPermission: boolean = await verifyPermission(projectId, userId, RolesEnum.DEVELOPER);
+
+      if (!hasPermission) {
+        response = {
+          message: 'Você não tem permissão para remover esta tag deste projeto.',
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.UNAUTHORIZED, response);
+      }
 
       if (!tagId) {
         response = {

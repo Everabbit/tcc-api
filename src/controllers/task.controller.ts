@@ -7,6 +7,8 @@ import TaskService from '../services/task.service';
 import { TaskStatusEnum } from '../enums/status.enum';
 import { AttachmentI } from '../models/attachment.model';
 import { CommentI } from '../models/comment.model';
+import { verifyPermission } from '../utils/roles.utils';
+import { RolesEnum } from '../enums/roles.enum';
 
 export default class TaskController {
   public async createTask(req: Request, res: Response) {
@@ -16,6 +18,7 @@ export default class TaskController {
         success: false,
       };
 
+      const userId: number = parseInt(req.params.userId);
       const task: TaskI = JSON.parse(req.body.task);
       const attachments = req.files as Express.Multer.File[];
 
@@ -25,6 +28,16 @@ export default class TaskController {
           success: false,
         };
         return ResponseValidator.response(req, res, HttpStatus.BAD_REQUEST, response);
+      }
+
+      const hasPermission: boolean = await verifyPermission(task.versionId, userId, RolesEnum.DEVELOPER);
+
+      if (!hasPermission) {
+        response = {
+          message: 'Você não tem permissão para criar uma tarefa nesta versão.',
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.UNAUTHORIZED, response);
       }
 
       const newTask: TaskI = {

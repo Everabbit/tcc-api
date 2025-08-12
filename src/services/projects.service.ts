@@ -1,6 +1,5 @@
 import { ResponseI } from '../interfaces/response.interface';
 import { Project, ProjectI } from '../models/project.model';
-import { ProjectMemberI } from '../interfaces/project.interface';
 import { ProjectParticipation, ProjectParticipationI } from '../models/project_participation.model';
 import { ProjectStatus } from '../enums/project_status.enum';
 import { User } from '../models/user.model';
@@ -359,14 +358,14 @@ export default class ProjectService {
     }
   }
 
-  public static async addUserOnProject(projectId: number, projectMember: ProjectMemberI): Promise<ResponseI> {
+  public static async addUserOnProject(projectId: number, projectMember: ProjectParticipationI): Promise<ResponseI> {
     try {
       let response: ResponseI = {
         message: '',
         success: false,
       };
 
-      if (!projectId || !projectMember || !projectMember.id || typeof projectMember.role !== 'number') {
+      if (!projectId || !projectMember || !projectMember.userId || typeof projectMember.role !== 'number') {
         response = {
           message: 'Dados incompletos para adicionar membro ao projeto.',
           success: false,
@@ -375,7 +374,7 @@ export default class ProjectService {
       }
 
       const userExists: ProjectParticipationI | null = await ProjectParticipation.findOne({
-        where: { userId: projectMember.id, projectId },
+        where: { userId: projectMember.userId, projectId },
       });
 
       if (userExists) {
@@ -387,7 +386,7 @@ export default class ProjectService {
       }
 
       const newProjectMember: ProjectParticipationI | null = await ProjectParticipation.create({
-        userId: projectMember.id,
+        userId: projectMember.userId,
         projectId: projectId,
         role: projectMember.role,
         invitedAt: new Date(),
@@ -412,6 +411,65 @@ export default class ProjectService {
       console.log(err);
       let response: ResponseI = {
         message: 'Erro ao adicionar usuário ao projeto, consulte o Log.',
+        success: false,
+      };
+      return response;
+    }
+  }
+
+  public static async updateUserOnProject(projectId: number, projectMember: ProjectParticipationI): Promise<ResponseI> {
+    try {
+      let response: ResponseI = {
+        message: '',
+        success: false,
+      };
+
+      if (!projectId || !projectMember || !projectMember.userId || typeof projectMember.role !== 'number') {
+        response = {
+          message: 'Dados incompletos para atualizar membro do projeto.',
+          success: false,
+        };
+        return response;
+      }
+
+      const userExists: ProjectParticipationI | null = await ProjectParticipation.findOne({
+        where: { userId: projectMember.userId, projectId },
+      });
+
+      if (!userExists) {
+        response = {
+          message: 'Usuário não encontrado neste projeto.',
+          success: false,
+        };
+        return response;
+      }
+
+      const [rowsAffected, [updatedMember]] = await ProjectParticipation.update(
+        {
+          role: projectMember.role,
+        },
+        { where: { userId: projectMember.userId, projectId }, returning: true }
+      );
+
+      if (rowsAffected === 0) {
+        response = {
+          message: 'Nenhum membro foi atualizado.',
+          success: false,
+        };
+        return response;
+      }
+
+      response = {
+        message: 'Membro do projeto atualizado com sucesso.',
+        success: true,
+        data: updatedMember,
+      };
+
+      return response;
+    } catch (err) {
+      console.log(err);
+      let response: ResponseI = {
+        message: 'Erro ao atualizar membro do projeto, consulte o Log.',
         success: false,
       };
       return response;
