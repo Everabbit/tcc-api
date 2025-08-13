@@ -212,9 +212,6 @@ export default class ProjectService {
               },
             ],
           },
-          {
-            model: Tag,
-          },
         ],
       });
 

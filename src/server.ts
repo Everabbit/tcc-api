@@ -1,12 +1,14 @@
 require('dotenv').config();
-import express from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import sequelize from './sequelize';
 import { ExpressRouter } from './configs/router';
 import path from 'path';
+import http from 'http';
+import { Server as SocketIOServer } from 'socket.io';
 
 const app = express();
-const router = new ExpressRouter();
+const httpServer = http.createServer(app);
 
 const corsOptions = {
   origin: process.env.FRONT_END_URL,
@@ -14,8 +16,16 @@ const corsOptions = {
   optionsSuccessStatus: 204,
 };
 
+const io = new SocketIOServer(httpServer, {
+  cors: corsOptions,
+});
+
 // Middlewares
 app.use(cors(corsOptions));
+app.use((req: Request, res: Response, next: NextFunction) => {
+  (req as any).io = io;
+  next();
+});
 app.use((req, res, next) => {
   const contentType = req.headers['content-type'];
 
@@ -30,7 +40,23 @@ app.use((req, res, next) => {
 app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
 // Rotas
+const router = new ExpressRouter();
 router.instanceRoutes(app);
+
+// Lógica de Conexão do Socket.IO
+io.on('connection', socket => {
+  console.log(`Socket conectado: ${socket.id}`);
+
+  // Evento para um cliente entrar em uma sala de projeto
+  socket.on('joinProjectRoom', projectId => {
+    socket.join(projectId);
+    console.log(`Socket ${socket.id} entrou na sala do projeto: ${projectId}`);
+  });
+
+  socket.on('disconnect', () => {
+    console.log(`Socket desconectado: ${socket.id}`);
+  });
+});
 
 // Testa a conexão com o banco
 sequelize
@@ -45,6 +71,6 @@ sequelize
 
 // Porta do servidor
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+httpServer.listen(PORT, () => {
   console.log(`Servidor rodando em http://localhost:${PORT}`);
 });

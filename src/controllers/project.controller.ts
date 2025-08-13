@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { ResponseI } from '../interfaces/response.interface';
 import ResponseValidator from '../utils/reponse.utils';
 import { HttpStatus } from '../enums/res_status.enum';
-import ProjectService from '../services/projects.service';
+import ProjectService from '../services/project.service';
 import { ProjectI } from '../models/project.model';
 import { ProjectCreateI, ProjectMemberI } from '../interfaces/project.interface';
 import { ProjectStatus } from '../enums/project_status.enum';
@@ -163,6 +163,13 @@ export default class ProjectController {
           success: false,
         };
         return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
+      }
+
+      const io = (req as any).io;
+
+      if (io) {
+        io.to(projectId).emit('projectUpdated', projectUpdated.data);
+        console.log(`Evento 'projectUpdated' emitido para a sala: ${projectId}`);
       }
 
       response = {
