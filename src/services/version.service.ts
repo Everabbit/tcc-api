@@ -41,10 +41,29 @@ export default class VersionService {
         };
         return response;
       }
+
+      const getVersionWithTasks: VersionI | null = await Version.findOne({
+        where: { id: newVersion.id },
+        include: [
+          {
+            model: Task,
+            attributes: ['id', 'status'],
+          },
+        ],
+      });
+
+      if (!getVersionWithTasks) {
+        response = {
+          message: 'Versão criada, mas não foi possível buscar os dados completos.',
+          success: false,
+        };
+        return response;
+      }
+
       response = {
         message: 'Versão criada com sucesso.',
         success: true,
-        data: newVersion,
+        data: getVersionWithTasks,
       };
       return response;
     } catch (err) {
@@ -100,10 +119,28 @@ export default class VersionService {
         return response;
       }
 
+      const getVersionWithTasks: VersionI | null = await Version.findOne({
+        where: { id: updatedVersion.id },
+        include: [
+          {
+            model: Task,
+            attributes: ['id', 'status'],
+          },
+        ],
+      });
+
+      if (!getVersionWithTasks) {
+        response = {
+          message: 'Versão atualizada, mas não foi possível buscar os dados completos.',
+          success: false,
+        };
+        return response;
+      }
+
       response = {
         message: 'Versão atualizada com sucesso.',
         success: true,
-        data: updatedVersion,
+        data: getVersionWithTasks,
       };
       return response;
     } catch (err) {

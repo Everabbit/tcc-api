@@ -45,16 +45,13 @@ router.instanceRoutes(app);
 
 // Lógica de Conexão do Socket.IO
 io.on('connection', socket => {
-  console.log(`Socket conectado: ${socket.id}`);
-
   // Evento para um cliente entrar em uma sala de projeto
   socket.on('joinProjectRoom', projectId => {
     socket.join(projectId);
-    console.log(`Socket ${socket.id} entrou na sala do projeto: ${projectId}`);
   });
 
-  socket.on('disconnect', () => {
-    console.log(`Socket desconectado: ${socket.id}`);
+  socket.on('joinUserRoom', userId => {
+    socket.join(userId);
   });
 });
 

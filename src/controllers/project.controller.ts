@@ -393,6 +393,13 @@ export default class ProjectController {
         return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
       }
 
+      const io = (req as any).io;
+
+      if (io) {
+        io.to(projectId).emit('memberAdded', addMemberResponse.data);
+        console.log(`Evento 'memberAdded' emitido para a sala: ${projectId}`);
+      }
+
       response = {
         message: 'Membros adicionados ao projeto com sucesso!',
         success: true,
@@ -481,6 +488,13 @@ export default class ProjectController {
         return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
       }
 
+      const io = (req as any).io;
+
+      if (io) {
+        io.to(projectId).emit('memberUpdated', updateMemberResponse.data);
+        console.log(`Evento 'memberUpdated' emitido para a sala: ${projectId}`);
+      }
+
       response = {
         message: 'Membro do projeto atualizado com sucesso!',
         success: true,
@@ -534,6 +548,13 @@ export default class ProjectController {
           success: false,
         };
         return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
+      }
+
+      const io = (req as any).io;
+
+      if (io) {
+        io.to(projectId).emit('memberRemoved', participationId);
+        console.log(`Evento 'memberRemoved' emitido para a sala: ${projectId}`);
       }
 
       response = {

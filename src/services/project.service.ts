@@ -109,10 +109,47 @@ export default class ProjectService {
         return response;
       }
 
+      const getProject = await Project.findOne({
+        where: { id: project.id },
+        include: [
+          {
+            model: Version,
+            include: [
+              {
+                model: Task,
+                attributes: ['id', 'status'],
+              },
+            ],
+          },
+        ],
+      });
+
+      if (!getProject) {
+        response = {
+          message: 'Projeto não encontrado após atualização.',
+          success: false,
+        };
+        return response;
+      }
+
+      let totalTasks = 0;
+      let completedTasks = 0;
+
+      if (getProject.versions) {
+        for (const version of getProject.versions) {
+          if (version.tasks) {
+            totalTasks += version.tasks.length;
+            completedTasks += version.tasks.filter(task => task.status === TaskStatusEnum.DONE).length;
+          }
+        }
+      }
+
+      getProject.dataValues.progress = totalTasks > 0 ? completedTasks / totalTasks : 0;
+
       response = {
         message: 'Projeto atualizado com sucesso.',
         success: true,
-        data: updatedProject,
+        data: getProject,
       };
       return response;
     } catch (err) {
@@ -196,12 +233,6 @@ export default class ProjectService {
         include: [
           {
             model: ProjectParticipation,
-            include: [
-              {
-                model: User,
-                attributes: ['id', 'fullName', 'username', 'image'],
-              },
-            ],
           },
           {
             model: Version,
@@ -397,10 +428,23 @@ export default class ProjectService {
         return response;
       }
 
+      const memberWithUser = await ProjectParticipation.findOne({
+        where: { id: newProjectMember.id },
+        include: [{ model: User, attributes: ['id', 'fullName', 'username', 'image'] }],
+      });
+
+      if (!memberWithUser) {
+        response = {
+          message: 'Membro adicionado, mas não foi possível buscar os dados completos.',
+          success: false,
+        };
+        return response;
+      }
+
       response = {
         message: 'Membro adicionado ao projeto com sucesso.',
         success: true,
-        data: newProjectMember,
+        data: memberWithUser,
       };
 
       return response;
@@ -456,10 +500,23 @@ export default class ProjectService {
         return response;
       }
 
+      const updatedMemberWithUser = await ProjectParticipation.findOne({
+        where: { id: updatedMember.id },
+        include: [{ model: User, attributes: ['id', 'fullName', 'username', 'image'] }],
+      });
+
+      if (!updatedMemberWithUser) {
+        response = {
+          message: 'Membro atualizado, mas não foi possível buscar os dados completos.',
+          success: false,
+        };
+        return response;
+      }
+
       response = {
         message: 'Membro do projeto atualizado com sucesso.',
         success: true,
-        data: updatedMember,
+        data: updatedMemberWithUser,
       };
 
       return response;
@@ -538,6 +595,10 @@ export default class ProjectService {
             model: User,
             attributes: ['id', 'fullName', 'username', 'image'],
           },
+        ],
+        order: [
+          ['role', 'ASC'],
+          ['invitedAt', 'ASC'],
         ],
       });
 

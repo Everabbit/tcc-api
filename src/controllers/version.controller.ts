@@ -56,6 +56,13 @@ export default class VersionController {
         return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
       }
 
+      const io = (req as any).io;
+
+      if (io) {
+        io.to(version.projectId).emit('versionCreated', versionCreated.data);
+        console.log(`Evento 'versionCreated' emitido para a sala: ${version.projectId}`);
+      }
+
       response = {
         message: 'Versão criada com sucesso!',
         success: true,
@@ -121,6 +128,13 @@ export default class VersionController {
         return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
       }
 
+      const io = (req as any).io;
+
+      if (io) {
+        io.to(version.projectId).emit('versionUpdated', versionUpdated.data);
+        console.log(`Evento 'versionUpdated' emitido para a sala: ${version.projectId}`);
+      }
+
       response = {
         message: 'Versão atualizada com sucesso!',
         success: true,
@@ -174,6 +188,13 @@ export default class VersionController {
           success: false,
         };
         return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
+      }
+
+      const io = (req as any).io;
+
+      if (io) {
+        io.to(projectId).emit('versionDeleted', versionId);
+        console.log(`Evento 'versionDeleted' emitido para a sala: ${projectId}`);
       }
 
       response = {

@@ -46,6 +46,13 @@ export default class TagController {
         return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
       }
 
+      const io = (req as any).io;
+
+      if (io) {
+        io.to(tag.projectId).emit('tagCreated', tagCreated.data);
+        console.log(`Evento 'tagCreated' emitido para a sala: ${tag.projectId}`);
+      }
+
       response = {
         message: 'Tag criada com sucesso!',
         success: true,
@@ -98,6 +105,13 @@ export default class TagController {
           success: false,
         };
         return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
+      }
+
+      const io = (req as any).io;
+
+      if (io) {
+        io.to(tag.projectId).emit('tagUpdated', tagUpdated.data);
+        console.log(`Evento 'tagUpdated' emitido para a sala: ${tag.projectId}`);
       }
 
       response = {
@@ -153,6 +167,13 @@ export default class TagController {
           success: false,
         };
         return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
+      }
+
+      const io = (req as any).io;
+
+      if (io) {
+        io.to(projectId).emit('tagDeleted', tagId);
+        console.log(`Evento 'tagDeleted' emitido para a sala: ${projectId}`);
       }
 
       response = {

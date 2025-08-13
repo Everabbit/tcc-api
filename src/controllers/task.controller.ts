@@ -89,10 +89,31 @@ export default class TaskController {
         }
       }
 
+      const getNewtask: ResponseI = await TaskService.get(taskCreated.data.id);
+
+      if (!getNewtask.success) {
+        response = {
+          message: getNewtask.message,
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.NOT_FOUND, response);
+      }
+
+      const io = (req as any).io;
+
+      if (io) {
+        io.to(projectId).emit('taskCreated', getNewtask.data);
+        console.log(`Evento 'taskCreated' emitido para a sala: ${projectId}`);
+        if (getNewtask.data.assigneeId) {
+          io.to(getNewtask.data.assigneeId).emit('taskCreatedUser', getNewtask.data);
+          console.log(`Evento 'taskCreatedUser' emitido para a sala: ${getNewtask.data.assigneeId}`);
+        }
+      }
+
       response = {
         message: 'Tarefa criada com sucesso!',
         success: true,
-        data: taskCreated.data,
+        data: getNewtask.data,
       };
       return ResponseValidator.response(req, res, HttpStatus.OK, response);
     } catch (err) {
@@ -147,6 +168,17 @@ export default class TaskController {
         deadline: task.deadline ? new Date(task.deadline) : undefined,
         blockReason: task.blockReason,
       };
+
+      const getTask: ResponseI = await TaskService.get(taskId);
+
+      if (!getTask.success) {
+        response = {
+          message: getTask.message,
+          success: false,
+        };
+      }
+
+      let lastAssigneeId: number = getTask.data.assigneeId || 0;
 
       const taskUpdated: ResponseI = await TaskService.update(updatedTask);
 
@@ -236,6 +268,32 @@ export default class TaskController {
         }
       }
 
+      const getUpdatedTask: ResponseI = await TaskService.get(taskId);
+
+      if (!getUpdatedTask.success) {
+        response = {
+          message: getUpdatedTask.message,
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.NOT_FOUND, response);
+      }
+
+      const io = (req as any).io;
+
+      if (io) {
+        io.to(projectId).emit('taskUpdated', getUpdatedTask.data);
+        console.log(`Evento 'taskUpdated' emitido para a sala: ${projectId}`);
+        if (getUpdatedTask.data.assigneeId === lastAssigneeId) {
+          io.to(getUpdatedTask.data.assigneeId).emit('taskUpdatedUser', getUpdatedTask.data);
+          console.log(`Evento 'taskUpdatedUser' emitido para a sala: ${getUpdatedTask.data.assigneeId}`);
+        } else if (lastAssigneeId && lastAssigneeId !== getUpdatedTask.data.assigneeId) {
+          io.to(lastAssigneeId).emit('taskDeletedUser', taskId);
+          console.log(`Evento 'taskDeletedUser' emitido para a sala: ${lastAssigneeId}`);
+          io.to(getUpdatedTask.data.assigneeId).emit('taskCreatedUser', getUpdatedTask.data);
+          console.log(`Evento 'taskCreatedUser' emitido para a sala: ${getUpdatedTask.data.assigneeId}`);
+        }
+      }
+
       response = {
         message: 'Tarefa atualizada com sucesso!',
         success: true,
@@ -280,6 +338,17 @@ export default class TaskController {
         };
         return ResponseValidator.response(req, res, HttpStatus.UNAUTHORIZED, response);
       }
+      const task: ResponseI = await TaskService.get(taskId);
+
+      if (!task.success) {
+        response = {
+          message: task.message,
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.NOT_FOUND, response);
+      }
+
+      const assigneeId: number = task.data.assigneeId || 0;
 
       const taskDeleted: ResponseI = await TaskService.delete(taskId);
 
@@ -289,6 +358,17 @@ export default class TaskController {
           success: false,
         };
         return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
+      }
+
+      const io = (req as any).io;
+
+      if (io) {
+        io.to(projectId).emit('taskDeleted', taskId);
+        console.log(`Evento 'taskDeleted' emitido para a sala: ${projectId}`);
+        if (taskDeleted.success) {
+          io.to(assigneeId).emit('taskDeletedUser', taskId);
+          console.log(`Evento 'taskDeletedUser' emitido para a sala: ${assigneeId}`);
+        }
       }
 
       response = {
@@ -362,7 +442,18 @@ export default class TaskController {
         return ResponseValidator.response(req, res, HttpStatus.BAD_REQUEST, response);
       }
 
-      const version: ResponseI = await VersionService.get(taskId);
+      const task: ResponseI = await TaskService.get(taskId);
+
+      if (!task.success) {
+        response = {
+          message: task.message,
+          success: false,
+          data: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.NOT_FOUND, response);
+      }
+
+      const version: ResponseI = await VersionService.get(task.data.versionId);
 
       if (!version.success) {
         response = {
@@ -393,6 +484,17 @@ export default class TaskController {
           data: false,
         };
         return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
+      }
+
+      const io = (req as any).io;
+
+      if (io) {
+        io.to(version.data.projectId).emit('taskStatusUpdated', taskUpdated.data);
+        console.log(`Evento 'taskStatusUpdated' emitido para a sala: ${version.data.projectId}`);
+        if (taskUpdated.data.assigneeId) {
+          io.to(taskUpdated.data.assigneeId).emit('taskStatusUpdatedUser', taskUpdated.data);
+          console.log(`Evento 'taskStatusUpdatedUser' emitido para a sala: ${taskUpdated.data.assigneeId}`);
+        }
       }
 
       response = {
