@@ -6,6 +6,7 @@ import { UserI } from '../models/user.model';
 import UserService from '../services/user.service';
 import { fromBase64 } from '../utils/transform.utils';
 import { PasswordChangeI } from '../interfaces/password.interface';
+import EmailService from '../services/email.service';
 
 export default class UserController {
   public async register(req: Request, res: Response) {
@@ -39,6 +40,10 @@ export default class UserController {
         };
         return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
       }
+
+      EmailService.sendEmail(newUser.data.email, 'Bem-vindo(a) ao TaskForge!', 'welcome', {
+        fullName: newUser.data.fullName,
+      });
 
       const jwtToken: ResponseI = await UserService.signJwt(newUser.data);
 

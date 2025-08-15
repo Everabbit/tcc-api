@@ -7,6 +7,7 @@ import path from 'path';
 import http from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 import cookieParser from 'cookie-parser';
+import EmailService from './services/email.service';
 
 const app = express();
 const httpServer = http.createServer(app);
@@ -63,6 +64,11 @@ sequelize
   .authenticate()
   .then(() => console.log('Conexão com o banco de dados estabelecida com sucesso!'))
   .catch(err => console.error('Erro ao conectar com o banco:', err));
+
+// Testa a conexão com o servidor de e-mail
+EmailService.verifyConnection()
+  .then(res => console.log(res.message))
+  .catch(err => console.error(err.message));
 
 sequelize
   .sync({ force: false }) // force: true recria tabelas a cada execução
