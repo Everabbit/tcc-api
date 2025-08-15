@@ -11,6 +11,7 @@ import { Commit } from './models/commit.model';
 import { Attachment } from './models/attachment.model';
 import { Comment } from './models/comment.model';
 import TaskTag from './models/task_tag.model';
+import { EmailRequest } from './models/email_request.model';
 
 const sequelize = new Sequelize({
   database: process.env.DATABASE,
@@ -33,6 +34,7 @@ const sequelize = new Sequelize({
     Comment,
     Attachment,
     TaskTag,
+    EmailRequest,
   ], // ARQUIVOS DE MODEL
   logging: false, // Opcional: desativa logs de SQL no console
 });

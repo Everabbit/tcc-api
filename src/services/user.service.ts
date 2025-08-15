@@ -7,6 +7,7 @@ import { PasswordChangeI } from '../interfaces/password.interface';
 import { Project } from '../models/project.model';
 import { ProjectParticipation } from '../models/project_participation.model';
 import { RolesEnum } from '../enums/roles.enum';
+import { EmailRequest } from '../models/email_request.model';
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
@@ -17,6 +18,54 @@ async function gerarHash(senha: string): Promise<string> {
 }
 
 export default class UserService {
+  public static async createEmailRequest(email: string) {
+    try {
+      let response: ResponseI = {
+        message: '',
+        success: false,
+      };
+
+      if (!email) {
+        return (response = {
+          message: 'Email não informado!',
+          success: false,
+        });
+      }
+
+      const existingRequest = await EmailRequest.findOne({ where: { email, accepted: false } });
+
+      if (existingRequest) {
+        return (response = {
+          message: 'Já existe uma solicitação de email pendente para este endereço.',
+          success: false,
+        });
+      }
+
+      const hash = await gerarHash(email + Date.now());
+      const sentDate = new Date();
+
+      const newEmailRequest = await EmailRequest.create({
+        email,
+        hash,
+        sentDate,
+        accepted: false,
+      });
+
+      response = {
+        message: 'Solicitação de email criada com sucesso.',
+        success: true,
+        data: newEmailRequest,
+      };
+      return response;
+    } catch (err) {
+      console.log(err);
+      let response: ResponseI = {
+        message: 'Erro ao criar solicitação de email, consulte o Log.',
+        success: false,
+      };
+      return response;
+    }
+  }
   public static async create(user: UserI): Promise<ResponseI> {
     try {
       let response: ResponseI = {

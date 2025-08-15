@@ -1,0 +1,86 @@
+<html lang='pt-br'>
+  <head>
+    <meta charset='UTF-8' />
+    <meta name='viewport' content='width=device-width, initial-scale=1.0' />
+    <title>Confirmação de E-mail - TaskForge</title>
+    <style>
+      body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple
+      Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; margin: 0; padding: 0; background-color: #f4f4f4; } .container
+      { max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 8px; overflow: hidden;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); } .header { background-color: #1976D2; /* Cor primária inferida dos
+      botões */ color: #ffffff; padding: 20px; text-align: center; } .header h1 { margin: 0; font-size: 24px; display:
+      flex; align-items: center; justify-content: center; } .header svg { width: 32px; height: 32px; margin-right: 12px;
+      } .content { padding: 30px; color: #333333; line-height: 1.6; } .content h2 { font-size: 22px; color: #1976D2;
+      margin-top: 0; } .content p { margin: 10px 0; } .cta-button { display: block; width: fit-content; margin: 30px
+      auto; padding: 15px 25px; background-color: #1976D2; color: #ffffff; text-align: center; text-decoration: none;
+      border-radius: 5px; font-size: 16px; font-weight: bold; } .footer { background-color: #eeeeee; padding: 20px;
+      text-align: center; font-size: 12px; color: #777777; } .footer p { margin: 0; }
+    </style>
+  </head>
+  <body>
+    <table width='100%' border='0' cellspacing='0' cellpadding='0' style='background-color:#f4f4f4;'>
+      <tr>
+        <td align='center'>
+          <table
+            class='container'
+            width='600'
+            border='0'
+            cellspacing='0'
+            cellpadding='0'
+            style='background-color:#ffffff; border-radius: 8px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);'
+          >
+            <tr>
+              <td class='header' style='background-color: #1976D2; color: #ffffff; padding: 20px; text-align: center;'>
+                <h1 style='margin: 0; font-size: 24px; display: flex; align-items: center; justify-content: center;'>
+                  <svg
+                    xmlns='http://www.w3.org/2000/svg'
+                    viewBox='0 0 24 24'
+                    fill='currentColor'
+                    style='width: 32px; height: 32px; margin-right: 12px;'
+                  >
+                    <path
+                      d='M9.75 4.5a.75.75 0 01.75.75v12a.75.75 0 01-1.5 0V5.25a.75.75 0 01.75-.75zm4.5 0a.75.75 0 01.75.75v12a.75.75 0 01-1.5 0V5.25a.75.75 0 01.75-.75zM8.25 4.5a3.75 3.75 0 00-3.75 3.75v6a3.75 3.75 0 003.75 3.75h7.5a3.75 3.75 0 003.75-3.75v-6a3.75 3.75 0 00-3.75-3.75h-7.5zM12 21a2.25 2.25 0 002.25-2.25v-6A2.25 2.25 0 0012 10.5H6a2.25 2.25 0 00-2.25 2.25v6A2.25 2.25 0 006 21h6z'
+                    />
+                  </svg>
+                  <b>TaskForge</b>
+                </h1>
+              </td>
+            </tr>
+            <tr>
+              <td class='content' style='padding: 30px; color: #333333; line-height: 1.6;'>
+                <h2 style='font-size: 22px; color: #1976D2; margin-top: 0;'>Confirme seu endereço de e-mail</h2>
+                <p>Olá,</p>
+                <p>Obrigado por se registrar no
+                  <strong>TaskForge</strong>. Para começar a gerenciar seus projetos com eficiência, por favor, confirme
+                  seu endereço de e-mail clicando no botão abaixo.</p>
+                <a
+                  href='{{baseRoute}}/registro/{{hash}}'
+                  class='cta-button'
+                  style='display: block; width: fit-content; margin: 30px auto; padding: 15px 25px; background-color: #1976D2; color: #ffffff; text-align: center; text-decoration: none; border-radius: 5px; font-size: 16px; font-weight: bold;'
+                >
+                  Confirmar E-mail
+                </a>
+                <p>Se o botão não funcionar, por favor, copie e cole o seguinte link no seu navegador:</p>
+                <p><a
+                    href='{{baseRoute}}/registro/{{hash}}'
+                    style='color: #1976D2; word-break: break-all;'
+                  >{{baseRoute}}/registro/{{hash}}</a></p>
+                <p>Se você não solicitou a criação de uma conta, por favor, ignore este e-mail.</p>
+                <p>Atenciosamente,<br />Equipe TaskForge</p>
+              </td>
+            </tr>
+            <tr>
+              <td
+                class='footer'
+                style='background-color: #eeeeee; padding: 20px; text-align: center; font-size: 12px; color: #777777;'
+              >
+                <p>&copy; 2025 TaskForge. Todos os direitos reservados.</p>
+                <p>Este é um e-mail transacional. Você o recebeu para confirmar sua conta no sistema.</p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

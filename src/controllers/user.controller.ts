@@ -9,6 +9,52 @@ import { PasswordChangeI } from '../interfaces/password.interface';
 import EmailService from '../services/email.service';
 
 export default class UserController {
+  public async createEmailRequest(req: Request, res: Response) {
+    try {
+      let response: ResponseI = {
+        message: '',
+        success: false,
+      };
+
+      const { email } = req.body;
+
+      if (!email) {
+        response = {
+          message: 'Email não informado!',
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.BAD_REQUEST, response);
+      }
+
+      const emailRequest: ResponseI = await UserService.createEmailRequest(email);
+
+      if (!emailRequest.success) {
+        response = {
+          message: emailRequest.message,
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
+      }
+
+      EmailService.sendEmail(email, 'Confirmação de Email', 'email_confirmation', {
+        hash: emailRequest.data.hash,
+        baseRoute: process.env.FRONT_END_URL,
+      });
+
+      response = {
+        message: 'Solicitação de email criada com sucesso!',
+        success: true,
+      };
+      return ResponseValidator.response(req, res, HttpStatus.OK, response);
+    } catch (err) {
+      console.log(err);
+      const response: ResponseI = {
+        message: `Erro: ${err}`,
+        success: false,
+      };
+      return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
+    }
+  }
   public async register(req: Request, res: Response) {
     try {
       let response: ResponseI = {
