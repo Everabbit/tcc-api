@@ -6,6 +6,7 @@ import { ExpressRouter } from './configs/router';
 import path from 'path';
 import http from 'http';
 import { Server as SocketIOServer } from 'socket.io';
+import cookieParser from 'cookie-parser';
 
 const app = express();
 const httpServer = http.createServer(app);
@@ -14,6 +15,7 @@ const corsOptions = {
   origin: process.env.FRONT_END_URL,
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
   optionsSuccessStatus: 204,
+  credentials: true,
 };
 
 const io = new SocketIOServer(httpServer, {
@@ -21,6 +23,7 @@ const io = new SocketIOServer(httpServer, {
 });
 
 // Middlewares
+app.use(cookieParser());
 app.use(cors(corsOptions));
 app.use((req: Request, res: Response, next: NextFunction) => {
   (req as any).io = io;

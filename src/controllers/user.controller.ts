@@ -48,13 +48,20 @@ export default class UserController {
           success: false,
         };
         return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
-      } else {
-        response = {
-          message: newUser.message,
-          success: true,
-          data: jwtToken.data,
-        };
       }
+
+      res.cookie('refreshToken', jwtToken.data.refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+      });
+
+      response = {
+        message: newUser.message,
+        success: true,
+        data: jwtToken.data,
+      };
 
       return ResponseValidator.response(req, res, HttpStatus.OK, response);
     } catch (err) {
@@ -105,13 +112,20 @@ export default class UserController {
           success: false,
         };
         return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
-      } else {
-        response = {
-          message: newUser.message,
-          success: true,
-          data: jwtToken.data,
-        };
       }
+
+      res.cookie('refreshToken', jwtToken.data.refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+      });
+
+      response = {
+        message: newUser.message,
+        success: true,
+        data: jwtToken.data,
+      };
 
       return ResponseValidator.response(req, res, HttpStatus.OK, response);
     } catch (err) {
@@ -123,39 +137,92 @@ export default class UserController {
       return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
     }
   }
-  public async validateToken(req: Request, res: Response) {
+
+  public async refreshToken(req: Request, res: Response) {
     try {
       let response: ResponseI = {
         message: '',
         success: false,
       };
 
-      const authHeader: string | undefined = req.headers.authorization;
-      let jwtToken: string | undefined;
+      const refreshToken = req.cookies.refreshToken;
 
-      if (authHeader && authHeader.startsWith('Bearer ')) {
-        jwtToken = authHeader.substring(7);
-      }
-
-      if (!jwtToken) {
+      if (!refreshToken) {
         response = {
-          message: 'Token não fornecido ou malformado.',
+          message: 'Token de atualização não fornecido!',
           success: false,
         };
         return ResponseValidator.response(req, res, HttpStatus.UNAUTHORIZED, response);
       }
-      const validateJwt: ResponseI = await UserService.verifyJwt(jwtToken);
 
-      if (!validateJwt.success) {
+      const newTokens: ResponseI = await UserService.refreshToken(refreshToken);
+
+      if (!newTokens.success) {
         response = {
-          message: validateJwt.message,
+          message: newTokens.message,
           success: false,
         };
-        return ResponseValidator.response(req, res, HttpStatus.UNAUTHORIZED, response);
+        return ResponseValidator.response(req, res, HttpStatus.FORBIDDEN, response);
       }
+
+      res.cookie('refreshToken', newTokens.data.refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+      });
 
       response = {
-        message: 'Token válido!',
+        message: 'Tokens atualizados com sucesso!',
+        success: true,
+        data: newTokens.data,
+      };
+      return ResponseValidator.response(req, res, HttpStatus.OK, response);
+    } catch (err) {
+      console.log(err);
+      const response: ResponseI = {
+        message: `Erro: ${err}`,
+        success: false,
+      };
+      return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
+    }
+  }
+
+  public async logout(req: Request, res: Response) {
+    try {
+      let response: ResponseI = {
+        message: '',
+        success: false,
+      };
+
+      const userId: number = parseInt(req.params.userId);
+
+      if (!userId) {
+        response = {
+          message: 'Id do usuário não informado!',
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.BAD_REQUEST, response);
+      }
+
+      const logoutResult: ResponseI = await UserService.logout(userId);
+
+      if (!logoutResult.success) {
+        response = {
+          message: logoutResult.message,
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
+      }
+
+      res.clearCookie('refreshToken', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+      });
+
+      response = {
+        message: 'Logout realizado com sucesso!',
         success: true,
       };
       return ResponseValidator.response(req, res, HttpStatus.OK, response);
@@ -164,7 +231,6 @@ export default class UserController {
       const response: ResponseI = {
         message: `Erro: ${err}`,
         success: false,
-        data: false,
       };
       return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
     }

@@ -1,5 +1,6 @@
 import { AllowNull, AutoIncrement, Column, DataType, HasOne, Model, PrimaryKey, Table } from 'sequelize-typescript';
 import { UserPreferences, UserPreferencesI } from './user_preferences.model';
+import { decrypt, encrypt } from '../helpers/encryption.helper';
 
 export interface UserI {
   id?: number;
@@ -7,8 +8,9 @@ export interface UserI {
   email: string;
   password: string;
   username?: string | null;
-  lastAcess?: Date | null;
+  lastAccess?: Date | null;
   image?: string | null;
+  refreshToken?: string | null;
   userPreferences?: UserPreferencesI;
 }
 
@@ -24,11 +26,30 @@ export class User extends Model implements UserI {
   id?: number;
 
   @AllowNull(false)
-  @Column({ type: DataType.STRING })
+  @Column({
+    type: DataType.STRING,
+    get(this: User) {
+      const rawValue = this.getDataValue('fullName');
+      return decrypt(rawValue);
+    },
+    set(this: User, value: string) {
+      this.setDataValue('fullName', encrypt(value));
+    },
+  })
   fullName!: string;
 
   @AllowNull(false)
-  @Column({ type: DataType.STRING })
+  @Column({
+    type: DataType.STRING,
+    unique: true,
+    get(this: User) {
+      const rawValue = this.getDataValue('email');
+      return decrypt(rawValue);
+    },
+    set(this: User, value: string) {
+      this.setDataValue('email', encrypt(value));
+    },
+  })
   email!: string;
 
   @AllowNull(false)
@@ -41,7 +62,7 @@ export class User extends Model implements UserI {
 
   @AllowNull(true)
   @Column({ type: DataType.DATE })
-  lastAcess?: Date | null;
+  lastAccess?: Date | null;
 
   @AllowNull(true)
   @Column({
@@ -59,6 +80,10 @@ export class User extends Model implements UserI {
     },
   })
   image?: string | null;
+
+  @AllowNull(true)
+  @Column({ type: DataType.STRING(512) })
+  refreshToken?: string | null;
 
   @HasOne(() => UserPreferences)
   userPreferences?: UserPreferencesI;

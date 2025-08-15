@@ -1,17 +1,14 @@
 Ainda é necessário no TCC:
 
-Criptografar dados pessoais do usuário (em trânsito e em repouso)
-Impedir edição de projeto 'encerrado'
 Adicionar sistema de E-mail
 Usuário aceitar participar de projeto
 Tela de senha esquecida
 Tela de Termos de Uso e Privacidade
 Confirmação de e-mail no cadastro
 Confirmação de e-mail na alteração de e-mail
-Tempo de expiração da sessão
 Tela de Dashboard completa
-Atualizar imagem da tab do navegador
-atualizar imagem do perfil do usuário quando atualiza na configuração
+
+Lançar sistema em site funcional
 
 
 Bugs:

@@ -52,14 +52,14 @@ export default class UserService {
 
       user.password = await gerarHash(user.password);
 
-      const lastAcess: Date = new Date();
+      const lastAccess: Date = new Date();
 
       const newUser: ResponseI = await User.create({
         email: user.email,
         password: user.password,
         fullName: user.fullName,
         username: user.username,
-        lastAcess: lastAcess,
+        lastAccess: lastAccess,
       })
         .then(e => {
           return (response = {
@@ -249,11 +249,11 @@ export default class UserService {
         });
       }
 
-      const lastAcess: Date = new Date();
+      const lastAccess: Date = new Date();
 
       const update: ResponseI = await User.update(
         {
-          lastAcess: lastAcess,
+          lastAccess: lastAccess,
         },
         { where: { email: userExists.email } }
       )
@@ -293,6 +293,48 @@ export default class UserService {
       });
     }
   }
+
+  public static async logout(userId: number): Promise<ResponseI> {
+    try {
+      let response: ResponseI = {
+        message: '',
+        success: false,
+      };
+
+      if (!userId) {
+        response = {
+          message: 'Id do usuário não informado.',
+          success: false,
+        };
+        return response;
+      }
+
+      const userExists = await User.findByPk(userId);
+      if (!userExists) {
+        response = {
+          message: 'Usuário não encontrado.',
+          success: false,
+        };
+        return response;
+      }
+
+      await userExists.update({ refreshToken: null });
+
+      response = {
+        message: 'Logout realizado com sucesso.',
+        success: true,
+      };
+      return response;
+    } catch (err) {
+      console.log(err);
+      let response: ResponseI = {
+        message: 'Erro ao realizar logout, consulte o Log.',
+        success: false,
+      };
+      return response;
+    }
+  }
+
   public static async signJwt(user: UserI): Promise<ResponseI> {
     try {
       let response: ResponseI = {
@@ -307,9 +349,32 @@ export default class UserService {
         });
       }
 
-      const JWT_SECRET = process.env.SECRET_KEY;
+      const JWT_ACCESS_SECRET = process.env.JWT_ACCESS_SECRET;
+      const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
 
-      const token: string = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET);
+      const accessToken: string = jwt.sign({ userId: user.id, email: user.email }, JWT_ACCESS_SECRET, {
+        expiresIn: '2m',
+      });
+
+      const refreshToken: string = jwt.sign({ userId: user.id, email: user.email }, JWT_REFRESH_SECRET, {
+        expiresIn: '7d',
+      });
+
+      const userExists: User | null = await User.findByPk(user.id);
+
+      if (!userExists) {
+        return (response = {
+          message: 'Usuário não encontrado!',
+          success: false,
+        });
+      }
+
+      await userExists.update({ refreshToken: refreshToken });
+
+      const token = {
+        accessToken: accessToken,
+        refreshToken: refreshToken,
+      };
 
       response = {
         message: 'Token criado com sucesso!',
@@ -322,51 +387,6 @@ export default class UserService {
       console.log(err);
       let response: ResponseI = {
         message: 'Erro ao gerar token de usuário, consulte o Log.',
-        success: false,
-      };
-      return response;
-    }
-  }
-  public static async verifyJwt(token: string): Promise<ResponseI> {
-    try {
-      let response: ResponseI = {
-        message: 'Token inválido ou expirado.',
-        success: false,
-      };
-
-      if (!token) {
-        return (response = {
-          message: 'Token não informado!',
-          success: false,
-        });
-      }
-
-      const JWT_SECRET: string | undefined = process.env.SECRET_KEY;
-
-      if (!JWT_SECRET) {
-        return (response = {
-          message: 'Chave secreta não informada!',
-          success: false,
-        });
-      }
-      const decodedPayload: boolean = !!jwt.verify(token, JWT_SECRET);
-
-      if (!decodedPayload) {
-        return (response = {
-          message: 'Token inválido!',
-          success: false,
-        });
-        JWT_SECRET;
-      } else {
-        return (response = {
-          message: 'Token válido!',
-          success: true,
-        });
-      }
-    } catch (err) {
-      console.log(err);
-      let response: ResponseI = {
-        message: 'Erro ao validar token de usuário, consulte o Log.',
         success: false,
       };
       return response;
@@ -385,7 +405,7 @@ export default class UserService {
         });
       }
 
-      const JWT_SECRET: string | undefined = process.env.SECRET_KEY;
+      const JWT_SECRET: string | undefined = process.env.JWT_ACCESS_SECRET;
 
       if (!JWT_SECRET) {
         return (response = {
@@ -412,6 +432,73 @@ export default class UserService {
       console.log(err);
       let response: ResponseI = {
         message: 'Erro ao validar token de usuário, consulte o Log.',
+        success: false,
+      };
+      return response;
+    }
+  }
+
+  public static async refreshToken(refreshToken: string): Promise<ResponseI> {
+    try {
+      let response: ResponseI = {
+        message: '',
+        success: false,
+      };
+
+      if (!refreshToken) {
+        return (response = {
+          message: 'Token de atualização não informado!',
+          success: false,
+        });
+      }
+
+      const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
+      const JWT_ACCESS_SECRET = process.env.JWT_ACCESS_SECRET;
+
+      if (!JWT_REFRESH_SECRET || !JWT_ACCESS_SECRET) {
+        return (response = {
+          message: 'Chaves secretas não encontradas!',
+          success: false,
+        });
+      }
+
+      const decoded: any = jwt.verify(refreshToken, JWT_REFRESH_SECRET);
+
+      const userExists: User | null = await User.findByPk(decoded.userId);
+
+      if (!userExists || userExists.refreshToken !== refreshToken) {
+        return (response = {
+          message: 'Token de atualização inválido!',
+          success: false,
+        });
+      }
+
+      const newAccessToken: string = jwt.sign({ userId: userExists.id, email: userExists.email }, JWT_ACCESS_SECRET, {
+        expiresIn: '2m',
+      });
+
+      const newRefreshToken: string = jwt.sign({ userId: userExists.id, email: userExists.email }, JWT_REFRESH_SECRET, {
+        expiresIn: '7d',
+      });
+
+      await userExists.update({ refreshToken: newRefreshToken });
+
+      const token = {
+        accessToken: newAccessToken,
+        refreshToken: newRefreshToken,
+      };
+
+      response = {
+        message: 'Tokens atualizados com sucesso!',
+        success: true,
+        data: token,
+      };
+
+      return response;
+    } catch (err) {
+      console.log(err);
+      let response: ResponseI = {
+        message: 'Erro ao atualizar token de usuário, consulte o Log.',
         success: false,
       };
       return response;
@@ -508,7 +595,7 @@ export default class UserService {
       }
       const user: UserI | null = await User.findOne({
         where: { id: userId },
-        attributes: ['id', 'fullName', 'email', 'username', 'image', 'lastAcess'],
+        attributes: ['id', 'fullName', 'email', 'username', 'image', 'lastAccess'],
         include: [
           {
             model: UserPreferences,

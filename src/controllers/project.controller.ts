@@ -25,7 +25,7 @@ export default class ProjectController {
       const project: ProjectCreateI = JSON.parse(req.body.project);
       const banner: Express.Multer.File | undefined = req.file;
 
-      if (!project || !project.name) {
+      if (!project || !project.name || !project.status) {
         response = {
           message: 'Dados incompletos para criar projeto.',
           success: false,
@@ -51,7 +51,7 @@ export default class ProjectController {
         creatorId: userId,
         name: project.name,
         description: project.description,
-        status: ProjectStatus.ACTIVE,
+        status: project.status,
         banner: bannerUploadUrl,
         deadline: project.deadline ? new Date(project.deadline) : undefined,
         progress: 0,

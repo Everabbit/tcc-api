@@ -9,8 +9,9 @@ export default class UserRoute {
 
   public createInstances(app: Application) {
     app.route('/users/register').post(this.controller.register);
-    app.route('/users/validateToken').get(this.controller.validateToken);
     app.route('/users/login').post(this.controller.login);
+    app.route('/users/refreshtoken').post(this.controller.refreshToken);
+    app.route('/users/logout').post(this.middleware.validateToken, this.controller.logout);
     app.route('/users/update').put(this.middleware.validateToken, this.controller.updateUser);
     app.route('/users/delete').delete(this.middleware.validateToken, this.controller.deleteUser);
     app.route('/users/updatepassword').put(this.middleware.validateToken, this.controller.updatePassword);
