@@ -1,6 +1,5 @@
 Ainda é necessário no TCC:
 
-Adicionar sistema de E-mail
 Usuário aceitar participar de projeto
 Tela de senha esquecida
 Tela de Termos de Uso e Privacidade
