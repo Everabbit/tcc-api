@@ -21,16 +21,7 @@ export class EmailRequest extends Model implements EmailRequestI {
   id?: number;
 
   @AllowNull(false)
-  @Column({
-    type: DataType.STRING,
-    get(this: EmailRequest) {
-      const rawValue = this.getDataValue('email');
-      return decrypt(rawValue);
-    },
-    set(this: EmailRequest, value: string) {
-      this.setDataValue('email', encrypt(value));
-    },
-  })
+  @Column({ type: DataType.STRING })
   email!: string;
 
   @AllowNull(false)

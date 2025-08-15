@@ -8,6 +8,8 @@ export default class UserRoute {
   private middleware: BasicMiddleware = new BasicMiddleware();
 
   public createInstances(app: Application) {
+    app.route('/users/emailrequest').post(this.controller.createEmailRequest);
+    app.route('/users/emailrequest/accept/:hash').get(this.controller.acceptEmailRequest);
     app.route('/users/register').post(this.controller.register);
     app.route('/users/login').post(this.controller.login);
     app.route('/users/refreshtoken').post(this.controller.refreshToken);

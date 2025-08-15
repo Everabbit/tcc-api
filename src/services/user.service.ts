@@ -32,11 +32,18 @@ export default class UserService {
         });
       }
 
-      const existingRequest = await EmailRequest.findOne({ where: { email, accepted: false } });
+      const existingRequest = await EmailRequest.findOne({ where: { email } });
 
-      if (existingRequest) {
+      if (existingRequest && existingRequest.accepted === false) {
         return (response = {
           message: 'Já existe uma solicitação de email pendente para este endereço.',
+          success: false,
+        });
+      }
+
+      if (existingRequest && existingRequest.accepted === true) {
+        return (response = {
+          message: 'Este email já foi aceito.',
           success: false,
         });
       }
@@ -66,6 +73,55 @@ export default class UserService {
       return response;
     }
   }
+
+  public static async acceptEmailRequest(hash: string) {
+    try {
+      let response: ResponseI = {
+        message: '',
+        success: false,
+      };
+
+      if (!hash) {
+        return (response = {
+          message: 'Hash não informado!',
+          success: false,
+        });
+      }
+
+      const emailRequest = await EmailRequest.findOne({ where: { hash } });
+
+      if (!emailRequest) {
+        return (response = {
+          message: 'Solicitação de email não encontrada.',
+          success: false,
+        });
+      }
+
+      if (emailRequest.accepted) {
+        return (response = {
+          message: 'Esta solicitação de email já foi aceita.',
+          success: false,
+        });
+      }
+
+      await emailRequest.update({ accepted: true });
+
+      response = {
+        message: 'Solicitação de email aceita com sucesso.',
+        success: true,
+        data: emailRequest,
+      };
+      return response;
+    } catch (err) {
+      console.log(err);
+      let response: ResponseI = {
+        message: 'Erro ao aceitar solicitação de email, consulte o Log.',
+        success: false,
+      };
+      return response;
+    }
+  }
+
   public static async create(user: UserI): Promise<ResponseI> {
     try {
       let response: ResponseI = {

@@ -4,7 +4,7 @@ import { HttpStatus } from '../enums/res_status.enum';
 import { ResponseI } from '../interfaces/response.interface';
 import { UserI } from '../models/user.model';
 import UserService from '../services/user.service';
-import { fromBase64 } from '../utils/transform.utils';
+import { fromBase64, toBase64 } from '../utils/transform.utils';
 import { PasswordChangeI } from '../interfaces/password.interface';
 import EmailService from '../services/email.service';
 
@@ -16,7 +16,7 @@ export default class UserController {
         success: false,
       };
 
-      const { email } = req.body;
+      const email: string = fromBase64(req.body.email);
 
       if (!email) {
         response = {
@@ -37,7 +37,7 @@ export default class UserController {
       }
 
       EmailService.sendEmail(email, 'Confirmação de Email', 'email_confirmation', {
-        hash: emailRequest.data.hash,
+        hash: toBase64(emailRequest.data.hash),
         baseRoute: process.env.FRONT_END_URL,
       });
 
@@ -55,6 +55,49 @@ export default class UserController {
       return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
     }
   }
+  public async acceptEmailRequest(req: Request, res: Response) {
+    try {
+      let response: ResponseI = {
+        message: '',
+        success: false,
+      };
+
+      const hash: string = fromBase64(req.params.hash);
+
+      if (!hash) {
+        response = {
+          message: 'Hash não informado!',
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.BAD_REQUEST, response);
+      }
+
+      const emailRequest: ResponseI = await UserService.acceptEmailRequest(hash);
+
+      if (!emailRequest.success) {
+        response = {
+          message: emailRequest.message,
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
+      }
+
+      response = {
+        message: 'Solicitação de email aceita com sucesso!',
+        success: true,
+        data: emailRequest.data,
+      };
+      return ResponseValidator.response(req, res, HttpStatus.OK, response);
+    } catch (err) {
+      console.log(err);
+      const response: ResponseI = {
+        message: `Erro: ${err}`,
+        success: false,
+      };
+      return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
+    }
+  }
+
   public async register(req: Request, res: Response) {
     try {
       let response: ResponseI = {
@@ -87,9 +130,16 @@ export default class UserController {
         return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
       }
 
-      EmailService.sendEmail(newUser.data.email, 'Bem-vindo(a) ao TaskForge!', 'welcome', {
-        fullName: newUser.data.fullName,
-      });
+      if (newUser.data && newUser.data.email) {
+        EmailService.sendEmail(newUser.data.email, 'Bem-vindo(a) ao TaskForge!', 'welcome', {
+          fullName: newUser.data.fullName,
+        });
+      } else {
+        console.error(
+          'Usuário criado com sucesso, mas o email não foi retornado. Não é possível enviar o email de boas-vindas.',
+          newUser.data
+        );
+      }
 
       const jwtToken: ResponseI = await UserService.signJwt(newUser.data);
 
