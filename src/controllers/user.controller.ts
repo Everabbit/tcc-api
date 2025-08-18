@@ -62,7 +62,7 @@ export default class UserController {
         success: false,
       };
 
-      const hash: string = fromBase64(req.params.hash);
+      const hash: string = req.params.hash;
 
       if (!hash) {
         response = {
@@ -86,6 +86,98 @@ export default class UserController {
         message: 'Solicitação de email aceita com sucesso!',
         success: true,
         data: emailRequest.data,
+      };
+      return ResponseValidator.response(req, res, HttpStatus.OK, response);
+    } catch (err) {
+      console.log(err);
+      const response: ResponseI = {
+        message: `Erro: ${err}`,
+        success: false,
+      };
+      return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
+    }
+  }
+
+  public async createChangePasswordRequest(req: Request, res: Response) {
+    try {
+      let response: ResponseI = {
+        message: '',
+        success: false,
+      };
+
+      const email: string = fromBase64(req.body.email);
+
+      if (!email) {
+        response = {
+          message: 'Email não informado!',
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.BAD_REQUEST, response);
+      }
+
+      const changePasswordRequest: ResponseI = await UserService.createChangePasswordRequest(email);
+
+      if (!changePasswordRequest.success) {
+        response = {
+          message: changePasswordRequest.message,
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
+      }
+
+      EmailService.sendEmail(email, 'Redefinição de Senha', 'password_reset', {
+        hash: toBase64(changePasswordRequest.data.hash),
+        baseRoute: process.env.FRONT_END_URL,
+      });
+
+      response = {
+        message: 'Solicitação de mudança de senha criada com sucesso!',
+        success: true,
+      };
+      return ResponseValidator.response(req, res, HttpStatus.OK, response);
+    } catch (err) {
+      console.log(err);
+      const response: ResponseI = {
+        message: `Erro: ${err}`,
+        success: false,
+      };
+      return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
+    }
+  }
+
+  public async changePassword(req: Request, res: Response) {
+    try {
+      let response: ResponseI = {
+        message: '',
+        success: false,
+      };
+
+      const hash: string = req.params.hash;
+      const newPasswordBase64: string = req.body.newPassword;
+
+      if (!hash || !newPasswordBase64) {
+        response = {
+          message: 'Hash ou nova senha não informados!',
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.BAD_REQUEST, response);
+      }
+
+      const newPassword = fromBase64(newPasswordBase64);
+
+      const changePasswordResult: ResponseI = await UserService.changePassword(hash, newPassword);
+
+      if (!changePasswordResult.success) {
+        response = {
+          message: changePasswordResult.message,
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
+      }
+
+      response = {
+        message: 'Senha alterada com sucesso!',
+        success: true,
       };
       return ResponseValidator.response(req, res, HttpStatus.OK, response);
     } catch (err) {

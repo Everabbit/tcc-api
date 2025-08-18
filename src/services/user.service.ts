@@ -8,6 +8,8 @@ import { Project } from '../models/project.model';
 import { ProjectParticipation } from '../models/project_participation.model';
 import { RolesEnum } from '../enums/roles.enum';
 import { EmailRequest } from '../models/email_request.model';
+import { ChangePasswordRequest } from '../models/change_password_request.model';
+import * as crypto from 'crypto';
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
@@ -18,7 +20,7 @@ async function gerarHash(senha: string): Promise<string> {
 }
 
 export default class UserService {
-  public static async createEmailRequest(email: string) {
+  public static async createEmailRequest(email: string): Promise<ResponseI> {
     try {
       let response: ResponseI = {
         message: '',
@@ -48,7 +50,7 @@ export default class UserService {
         });
       }
 
-      const hash = await gerarHash(email + Date.now());
+      const hash = crypto.randomBytes(32).toString('hex');
       const sentDate = new Date();
 
       const newEmailRequest = await EmailRequest.create({
@@ -74,7 +76,7 @@ export default class UserService {
     }
   }
 
-  public static async acceptEmailRequest(hash: string) {
+  public static async acceptEmailRequest(hash: string): Promise<ResponseI> {
     try {
       let response: ResponseI = {
         message: '',
@@ -116,6 +118,114 @@ export default class UserService {
       console.log(err);
       let response: ResponseI = {
         message: 'Erro ao aceitar solicitação de email, consulte o Log.',
+        success: false,
+      };
+      return response;
+    }
+  }
+
+  public static async createChangePasswordRequest(email: string): Promise<ResponseI> {
+    try {
+      let response: ResponseI = {
+        message: '',
+        success: false,
+      };
+
+      if (!email) {
+        return (response = {
+          message: 'Email não informado!',
+          success: false,
+        });
+      }
+
+      const user = await User.findOne({ where: { email } });
+
+      if (!user) {
+        return (response = {
+          message: 'Usuário não encontrado!',
+          success: false,
+        });
+      }
+
+      const hash = crypto.randomBytes(32).toString('hex');
+      const sentDate = new Date();
+
+      const newChangePasswordRequest = await ChangePasswordRequest.create({
+        userId: user.id!,
+        hash,
+        sentDate,
+        verified: false,
+      });
+
+      response = {
+        message: 'Solicitação de mudança de senha criada com sucesso.',
+        success: true,
+        data: newChangePasswordRequest,
+      };
+      return response;
+    } catch (err) {
+      console.log(err);
+      let response: ResponseI = {
+        message: 'Erro ao criar solicitação de mudança de senha, consulte o Log.',
+        success: false,
+      };
+      return response;
+    }
+  }
+
+  public static async changePassword(hash: string, newPassword: string): Promise<ResponseI> {
+    try {
+      let response: ResponseI = {
+        message: '',
+        success: false,
+      };
+
+      if (!hash || !newPassword) {
+        return (response = {
+          message: 'Hash ou nova senha não informados!',
+          success: false,
+        });
+      }
+
+      const changePasswordRequest = await ChangePasswordRequest.findOne({ where: { hash } });
+
+      if (!changePasswordRequest) {
+        return (response = {
+          message: 'Solicitação de mudança de senha não encontrada.',
+          success: false,
+        });
+      }
+
+      if (changePasswordRequest.verified) {
+        return (response = {
+          message: 'Esta solicitação de mudança de senha já foi utilizada.',
+          success: false,
+        });
+      }
+
+      const user = await User.findOne({ where: { id: changePasswordRequest.userId } });
+
+      if (!user) {
+        return (response = {
+          message: 'Usuário não encontrado para esta solicitação.',
+          success: false,
+        });
+      }
+
+      const newHashedPassword = await gerarHash(newPassword);
+
+      await user.update({ password: newHashedPassword });
+      await changePasswordRequest.update({ verified: true });
+
+      response = {
+        message: 'Senha alterada com sucesso.',
+        success: true,
+      };
+      return response;
+    } catch (err) {
+      console.log(err);
+      let response: ResponseI = {
+        message: 'Erro ao alterar senha, consulte o Log.',
         success: false,
       };
       return response;
