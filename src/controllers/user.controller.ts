@@ -37,7 +37,7 @@ export default class UserController {
       }
 
       EmailService.sendEmail(email, 'Confirmação de Email', 'email_confirmation', {
-        hash: toBase64(emailRequest.data.hash),
+        hash: emailRequest.data.hash,
         baseRoute: process.env.FRONT_END_URL,
       });
 
@@ -126,7 +126,7 @@ export default class UserController {
       }
 
       EmailService.sendEmail(email, 'Redefinição de Senha', 'password_reset', {
-        hash: toBase64(changePasswordRequest.data.hash),
+        hash: changePasswordRequest.data.hash,
         baseRoute: process.env.FRONT_END_URL,
       });
 
@@ -153,7 +153,7 @@ export default class UserController {
       };
 
       const hash: string = req.params.hash;
-      const newPasswordBase64: string = req.body.newPassword;
+      const newPasswordBase64: string = req.body.password;
 
       if (!hash || !newPasswordBase64) {
         response = {
@@ -225,6 +225,7 @@ export default class UserController {
       if (newUser.data && newUser.data.email) {
         EmailService.sendEmail(newUser.data.email, 'Bem-vindo(a) ao TaskForge!', 'welcome', {
           fullName: newUser.data.fullName,
+          baseRoute: process.env.FRONT_END_URL,
         });
       } else {
         console.error(

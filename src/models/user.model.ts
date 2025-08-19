@@ -1,12 +1,13 @@
 import { AllowNull, AutoIncrement, Column, DataType, HasOne, Model, PrimaryKey, Table } from 'sequelize-typescript';
 import { UserPreferences, UserPreferencesI } from './user_preferences.model';
-import { decrypt, encrypt } from '../helpers/encryption.helper';
+import { createSearchableHash, decrypt, encrypt } from '../helpers/encryption.helper';
 
 export interface UserI {
   id?: number;
   fullName: string;
   email: string;
   password: string;
+  emailHash?: string | null;
   username?: string | null;
   lastAccess?: Date | null;
   image?: string | null;
@@ -48,9 +49,14 @@ export class User extends Model implements UserI {
     },
     set(this: User, value: string) {
       this.setDataValue('email', encrypt(value));
+      this.setDataValue('emailHash', createSearchableHash(value));
     },
   })
   email!: string;
+
+  @AllowNull(true)
+  @Column({ type: DataType.STRING, unique: true, field: 'email_hash' })
+  emailHash?: string | null;
 
   @AllowNull(false)
   @Column({ type: DataType.STRING })

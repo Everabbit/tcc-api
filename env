@@ -24,6 +24,8 @@ FRONT_END_URL=http://localhost:9000
 # OPEN AI
 OPENAI_API_KEY=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
 
+# ENCRYPTION
+ENCRYPTION_SEARCH_SALT="hfiugh8fg28fg28dhejfhniufh2rh39fheduifhn29hr93j"
 
 # Email
 EMAIL_HOST=smtp.gmail.com

@@ -10,8 +10,9 @@ import { RolesEnum } from '../enums/roles.enum';
 import { EmailRequest } from '../models/email_request.model';
 import { ChangePasswordRequest } from '../models/change_password_request.model';
 import * as crypto from 'crypto';
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
+import { createSearchableHash, decrypt, encrypt } from '../helpers/encryption.helper';
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
 
 async function gerarHash(senha: string): Promise<string> {
   const saltRounds: number = Number(process.env.SALT);
@@ -34,7 +35,7 @@ export default class UserService {
         });
       }
 
-      const existingRequest = await EmailRequest.findOne({ where: { email } });
+      const existingRequest = await EmailRequest.findOne({ where: { emailHash: createSearchableHash(email) } });
 
       if (existingRequest && existingRequest.accepted === false) {
         return (response = {
@@ -138,7 +139,7 @@ export default class UserService {
         });
       }
 
-      const user = await User.findOne({ where: { email } });
+      const user = await User.findOne({ where: { emailHash: createSearchableHash(email) } });
 
       if (!user) {
         return (response = {
@@ -249,7 +250,7 @@ export default class UserService {
         where: {
           [Op.or]: [
             {
-              email: user.email,
+              emailHash: createSearchableHash(user.email),
             },
             {
               username: user.username,
@@ -407,6 +408,13 @@ export default class UserService {
         return response;
       }
 
+      await EmailRequest.destroy({
+        where: { emailHash: createSearchableHash(userExists.email) },
+      });
+      await ChangePasswordRequest.destroy({
+        where: { userId: userId },
+      });
+
       response = {
         message: 'Usuário removido com sucesso.',
         success: true,
@@ -439,7 +447,7 @@ export default class UserService {
         where: {
           [Op.or]: [
             {
-              email: user.email,
+              emailHash: createSearchableHash(user.email),
             },
             {
               username: user.email,
@@ -567,6 +575,13 @@ export default class UserService {
       const JWT_ACCESS_SECRET = process.env.JWT_ACCESS_SECRET;
       const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
 
+      if (!JWT_ACCESS_SECRET || !JWT_REFRESH_SECRET) {
+        return (response = {
+          message: 'Chaves secretas não configuradas no ambiente.',
+          success: false,
+        });
+      }
+
       const accessToken: string = jwt.sign({ userId: user.id, email: user.email }, JWT_ACCESS_SECRET, {
         expiresIn: '2m',
       });
@@ -620,27 +635,25 @@ export default class UserService {
         });
       }
 
-      const JWT_SECRET: string | undefined = process.env.JWT_ACCESS_SECRET;
+      const decoded = jwt.decode(token);
 
-      if (!JWT_SECRET) {
-        return (response = {
-          message: 'Chave secreta não informada!',
-          success: false,
-        });
-      }
-
-      const decoded = jwt.decode(token, JWT_SECRET);
-
-      if (!decoded) {
+      if (!decoded || typeof decoded === 'string') {
         return (response = {
           message: 'Token inválido!',
           success: false,
         });
-      } else {
+      }
+
+      if ('userId' in decoded && typeof decoded.userId === 'number') {
         return (response = {
           message: 'Token válido!',
           success: true,
           data: decoded.userId,
+        });
+      } else {
+        return (response = {
+          message: 'Token inválido!',
+          success: false,
         });
       }
     } catch (err) {

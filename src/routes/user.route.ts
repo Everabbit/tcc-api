@@ -11,7 +11,7 @@ export default class UserRoute {
     app.route('/users/emailrequest').post(this.controller.createEmailRequest);
     app.route('/users/emailrequest/accept/:hash').get(this.controller.acceptEmailRequest);
     app.route('/users/changepasswordrequest').post(this.controller.createChangePasswordRequest);
-    app.route('/users/changepassword/:hash').put(this.controller.changePassword);
+    app.route('/users/changepassword/:hash').post(this.controller.changePassword);
     app.route('/users/register').post(this.controller.register);
     app.route('/users/login').post(this.controller.login);
     app.route('/users/refreshtoken').post(this.controller.refreshToken);

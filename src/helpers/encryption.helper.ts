@@ -6,6 +6,12 @@ if (!secretKey) {
   throw new Error('A variável de ambiente ENCRYPTION_SECRET_KEY não está definida.');
 }
 
+const searchSalt = process.env.ENCRYPTION_SEARCH_SALT;
+
+if (!searchSalt) {
+  throw new Error('A variável de ambiente ENCRYPTION_SEARCH_SALT não está definida.');
+}
+
 const key = createHash('sha256').update(String(secretKey)).digest('base64').substring(0, 32);
 
 const ALGORITHM = 'aes-256-gcm';
@@ -50,4 +56,14 @@ export function decrypt(hash: string | null | undefined): string | null {
     console.error('Falha ao descriptografar:', error);
     return hash;
   }
+}
+
+export function createSearchableHash(text: string | null | undefined): string | null {
+  if (text == null) {
+    return null;
+  }
+
+  return createHash('sha256')
+    .update(String(text) + searchSalt)
+    .digest('hex');
 }
