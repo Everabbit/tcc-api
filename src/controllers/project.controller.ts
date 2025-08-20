@@ -22,7 +22,7 @@ export default class ProjectController {
       };
 
       const userId: number = parseInt(req.params.userId);
-      const project: ProjectCreateI = JSON.parse(req.body.project);
+      const project: ProjectI = JSON.parse(req.body.project);
       const banner: Express.Multer.File | undefined = req.file;
 
       if (!project || !project.name || !project.status) {
@@ -70,6 +70,7 @@ export default class ProjectController {
       const admin: ProjectParticipationI = {
         role: RolesEnum.ADMIN,
         userId: userId,
+        accepted: true,
       };
       const adminAdded: ResponseI = await ProjectService.addUserOnProject(projectCreated.data.id, admin);
       if (!adminAdded.success) {
@@ -81,10 +82,14 @@ export default class ProjectController {
       }
 
       //adicionar outros usuários
-      if (project.members) {
-        project.members.forEach(async element => {
-          const user: ResponseI = await ProjectService.addUserOnProject(projectCreated.data.id, element);
-        });
+      console.log(project);
+      if (project.participation) {
+        for (const member of project.participation) {
+          const user: ResponseI = await ProjectService.addUserOnProject(projectCreated.data.id, member);
+          if (!user.success) {
+            console.error(`Erro ao adicionar membro ${member.userId}: ${user.message}`);
+          }
+        }
       }
 
       response = {

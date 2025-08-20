@@ -13,6 +13,7 @@ import * as crypto from 'crypto';
 import { createSearchableHash, decrypt, encrypt } from '../helpers/encryption.helper';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import { EmailChangeRequest } from '../models/email_change_request.model';
 
 async function gerarHash(senha: string): Promise<string> {
   const saltRounds: number = Number(process.env.SALT);
@@ -227,6 +228,131 @@ export default class UserService {
       console.log(err);
       let response: ResponseI = {
         message: 'Erro ao alterar senha, consulte o Log.',
+        success: false,
+      };
+      return response;
+    }
+  }
+
+  public static async changeEmailRequest(userId: number, newEmail: string): Promise<ResponseI> {
+    try {
+      let response: ResponseI = {
+        message: '',
+        success: false,
+      };
+
+      if (!userId || !newEmail) {
+        return (response = {
+          message: 'Dados incompletos para solicitar a mudança de email!',
+          success: false,
+        });
+      }
+
+      const user = await User.findByPk(userId);
+
+      if (!user) {
+        return (response = {
+          message: 'Usuário não encontrado!',
+          success: false,
+        });
+      }
+
+      const existingEmailRequest = await EmailChangeRequest.findOne({
+        where: { userId: userId, newEmailHash: createSearchableHash(newEmail) },
+      });
+
+      if (existingEmailRequest && existingEmailRequest.verified === false) {
+        return (response = {
+          message: 'Já existe uma solicitação de mudança de email pendente para este endereço.',
+          success: false,
+        });
+      }
+
+      if (existingEmailRequest && existingEmailRequest.verified === true) {
+        return (response = {
+          message: 'Este email já foi verificado para este usuário.',
+          success: false,
+        });
+      }
+
+      const hash = crypto.randomBytes(32).toString('hex');
+      const sentDate = new Date();
+
+      const newEmailChangeRequest = await EmailChangeRequest.create({
+        userId: userId,
+        newEmail: newEmail,
+        hash: hash,
+        sentDate: sentDate,
+        verified: false,
+      });
+
+      response = {
+        message: 'Solicitação de mudança de email criada com sucesso.',
+        success: true,
+        data: newEmailChangeRequest,
+      };
+      return response;
+    } catch (err) {
+      console.log(err);
+      let response: ResponseI = {
+        message: 'Erro ao criar solicitação de mudança de email, consulte o Log.',
+        success: false,
+      };
+      return response;
+    }
+  }
+
+  public static async verifyEmailChange(hash: string): Promise<ResponseI> {
+    try {
+      let response: ResponseI = {
+        message: '',
+        success: false,
+      };
+
+      if (!hash) {
+        return (response = {
+          message: 'Hash não informado!',
+          success: false,
+        });
+      }
+
+      const emailChangeRequest = await EmailChangeRequest.findOne({ where: { hash } });
+
+      if (!emailChangeRequest) {
+        return (response = {
+          message: 'Solicitação de mudança de email não encontrada.',
+          success: false,
+        });
+      }
+
+      if (emailChangeRequest.verified) {
+        return (response = {
+          message: 'Esta solicitação de mudança de email já foi verificada.',
+          success: false,
+        });
+      }
+
+      const user = await User.findByPk(emailChangeRequest.userId);
+
+      if (!user) {
+        return (response = {
+          message: 'Usuário não encontrado para esta solicitação.',
+          success: false,
+        });
+      }
+
+      await user.update({ email: emailChangeRequest.newEmail });
+      await emailChangeRequest.update({ verified: true });
+
+      response = {
+        message: 'Email alterado com sucesso.',
+        success: true,
+      };
+      return response;
+    } catch (err) {
+      console.log(err);
+      let response: ResponseI = {
+        message: 'Erro ao verificar solicitação de mudança de email, consulte o Log.',
         success: false,
       };
       return response;

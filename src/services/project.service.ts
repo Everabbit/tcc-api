@@ -405,9 +405,17 @@ export default class ProjectService {
         where: { userId: projectMember.userId, projectId },
       });
 
-      if (userExists) {
+      if (userExists && userExists.accepted) {
         response = {
           message: 'Usuário já participa deste projeto.',
+          success: false,
+        };
+        return response;
+      }
+
+      if (userExists && !userExists.accepted) {
+        response = {
+          message: 'A solicitação de participação já foi enviada, mas ainda não foi aceita.',
           success: false,
         };
         return response;
@@ -417,6 +425,7 @@ export default class ProjectService {
         userId: projectMember.userId,
         projectId: projectId,
         role: projectMember.role,
+        accepted: !!projectMember.accepted,
         invitedAt: new Date(),
       });
 

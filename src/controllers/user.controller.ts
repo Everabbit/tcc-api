@@ -190,6 +190,99 @@ export default class UserController {
     }
   }
 
+  public async changeEmailRequest(req: Request, res: Response) {
+    try {
+      let response: ResponseI = {
+        message: '',
+        success: false,
+      };
+
+      const userId: number = parseInt(req.params.userId);
+      const newEmailBase64: string = req.body.email;
+
+      if (!userId || !newEmailBase64) {
+        response = {
+          message: 'Dados incompletos para solicitar a mudança de email!',
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.BAD_REQUEST, response);
+      }
+
+      const newEmail = fromBase64(newEmailBase64);
+
+      const emailChangeRequest: ResponseI = await UserService.changeEmailRequest(userId, newEmail);
+
+      if (!emailChangeRequest.success) {
+        response = {
+          message: emailChangeRequest.message,
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
+      }
+
+      EmailService.sendEmail(newEmail, 'Confirmação de Mudança de Email', 'email_change', {
+        hash: emailChangeRequest.data.hash,
+        baseRoute: process.env.FRONT_END_URL,
+      });
+
+      response = {
+        message: 'Solicitação de mudança de email criada com sucesso!',
+        data: true,
+        success: true,
+      };
+      return ResponseValidator.response(req, res, HttpStatus.OK, response);
+    } catch (err) {
+      console.log(err);
+      const response: ResponseI = {
+        message: `Erro: ${err}`,
+        success: false,
+      };
+      return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
+    }
+  }
+
+  public async verifyEmailChange(req: Request, res: Response) {
+    try {
+      let response: ResponseI = {
+        message: '',
+        success: false,
+      };
+
+      const hash: string = req.params.hash;
+
+      if (!hash) {
+        response = {
+          message: 'Hash não informado!',
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.BAD_REQUEST, response);
+      }
+
+      const emailChangeResult: ResponseI = await UserService.verifyEmailChange(hash);
+
+      if (!emailChangeResult.success) {
+        response = {
+          message: emailChangeResult.message,
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
+      }
+
+      response = {
+        message: 'Email alterado com sucesso!',
+        success: true,
+      };
+      return ResponseValidator.response(req, res, HttpStatus.OK, response);
+    } catch (err) {
+      console.log(err);
+      const response: ResponseI = {
+        message: `Erro: ${err}`,
+        success: false,
+      };
+      return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
+    }
+  }
+
   public async register(req: Request, res: Response) {
     try {
       let response: ResponseI = {

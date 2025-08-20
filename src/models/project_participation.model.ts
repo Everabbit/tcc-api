@@ -22,6 +22,7 @@ export interface ProjectParticipationI {
   project?: ProjectI;
   role: RolesEnum;
   invitedAt?: Date;
+  accepted: boolean;
   acceptedAt?: Date | null;
 }
 
@@ -59,6 +60,10 @@ export class ProjectParticipation extends Model implements ProjectParticipationI
   @AllowNull(false)
   @Column({ type: DataType.DATE })
   invitedAt!: Date;
+
+  @AllowNull(false)
+  @Column({ type: DataType.BOOLEAN, defaultValue: false })
+  accepted!: boolean;
 
   @AllowNull(true)
   @Column({ type: DataType.DATE })
