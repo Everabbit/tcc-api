@@ -1,11 +1,11 @@
 import { Table, Column, Model, DataType, BelongsTo, ForeignKey } from 'sequelize-typescript';
-import { User } from './user.model';
+import { User, UserI } from './user.model';
 import { NotificationType } from '../enums/notification_type.enum';
 
 export interface NotificationI {
   id?: number;
   userId: number;
-  user?: User;
+  user?: UserI;
   type: NotificationType;
   title: string;
   message: string;
@@ -18,7 +18,7 @@ export interface NotificationI {
   timestamps: true,
   underscored: true,
 })
-export class Notification extends Model<NotificationI> implements NotificationI {
+export class Notification extends Model implements NotificationI {
   @Column({
     type: DataType.INTEGER,
     primaryKey: true,

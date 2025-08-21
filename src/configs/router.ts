@@ -5,6 +5,7 @@ import VersionRoute from '../routes/version.route';
 import TaskRoute from '../routes/task.route';
 import TagRoute from '../routes/tag.route';
 import CommentRoute from '../routes/comment.route';
+import NotificationRoute from '../routes/notification.route';
 
 export class ExpressRouter {
   private userRoute: UserRoute = new UserRoute();
@@ -13,6 +14,7 @@ export class ExpressRouter {
   private taskRoute: TaskRoute = new TaskRoute();
   private tagRoute: TagRoute = new TagRoute();
   private commentRoute: CommentRoute = new CommentRoute();
+  private notificationRoute: NotificationRoute = new NotificationRoute();
 
   public instanceRoutes(app: Application): void {
     this.userRoute.createInstances(app);
@@ -21,5 +23,6 @@ export class ExpressRouter {
     this.taskRoute.createInstances(app);
     this.tagRoute.createInstances(app);
     this.commentRoute.createInstances(app);
+    this.notificationRoute.createInstances(app);
   }
 }
