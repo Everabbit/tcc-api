@@ -14,6 +14,7 @@ import TaskTag from './models/task_tag.model';
 import { EmailRequest } from './models/email_request.model';
 import { ChangePasswordRequest } from './models/change_password_request.model';
 import { EmailChangeRequest } from './models/email_change_request.model';
+import { Notification } from './models/notification.model';
 
 const sequelize = new Sequelize({
   database: process.env.DATABASE,
@@ -39,6 +40,7 @@ const sequelize = new Sequelize({
     EmailRequest,
     ChangePasswordRequest,
     EmailChangeRequest,
+    Notification,
   ], // ARQUIVOS DE MODEL
   logging: false, // Opcional: desativa logs de SQL no console
 });

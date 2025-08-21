@@ -82,10 +82,14 @@ export default class ProjectController {
       }
 
       //adicionar outros usuários
-      console.log(project);
       if (project.participation) {
         for (const member of project.participation) {
-          const user: ResponseI = await ProjectService.addUserOnProject(projectCreated.data.id, member);
+          const user: ResponseI = await ProjectService.inviteUserToProject(
+            projectCreated.data.id,
+            member,
+            adminAdded.data.user.id,
+            (req as any).io
+          );
           if (!user.success) {
             console.error(`Erro ao adicionar membro ${member.userId}: ${user.message}`);
           }
@@ -389,7 +393,12 @@ export default class ProjectController {
         return ResponseValidator.response(req, res, HttpStatus.UNAUTHORIZED, response);
       }
 
-      const addMemberResponse: ResponseI = await ProjectService.addUserOnProject(projectId, projectMember);
+      const addMemberResponse: ResponseI = await ProjectService.inviteUserToProject(
+        projectId,
+        projectMember,
+        userId,
+        (req as any).io
+      );
       if (!addMemberResponse.success) {
         response = {
           message: `Erro ao adicionar membro ${projectMember.id}: ${addMemberResponse.message}`,

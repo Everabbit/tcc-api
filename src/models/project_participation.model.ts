@@ -9,6 +9,7 @@ import {
   PrimaryKey,
   Table,
   Model,
+  Unique,
 } from 'sequelize-typescript';
 import { Project, ProjectI } from './project.model';
 import { User, UserI } from './user.model';
@@ -24,6 +25,7 @@ export interface ProjectParticipationI {
   invitedAt?: Date;
   accepted: boolean;
   acceptedAt?: Date | null;
+  invitationToken?: string | null;
 }
 
 @Table({
@@ -68,4 +70,9 @@ export class ProjectParticipation extends Model implements ProjectParticipationI
   @AllowNull(true)
   @Column({ type: DataType.DATE })
   acceptedAt?: Date | null;
+
+  @AllowNull(true)
+  @Unique(true)
+  @Column({ type: DataType.STRING })
+  invitationToken!: string | null;
 }

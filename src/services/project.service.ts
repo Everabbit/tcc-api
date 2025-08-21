@@ -1,13 +1,16 @@
 import { ResponseI } from '../interfaces/response.interface';
 import { Project, ProjectI } from '../models/project.model';
 import { ProjectParticipation, ProjectParticipationI } from '../models/project_participation.model';
-import { ProjectStatus } from '../enums/project_status.enum';
 import { User } from '../models/user.model';
 import { Version } from '../models/version.model';
-import { Tag, TagI } from '../models/tag.model';
 import { Task } from '../models/task.models';
 import { TaskStatusEnum } from '../enums/status.enum';
 import { clone } from '../utils/utils';
+import * as crypto from 'crypto';
+import { Server as SocketIOServer } from 'socket.io';
+import NotificationService from './notification.service';
+import EmailService from './email.service';
+import { NotificationType } from '../enums/notification_type.enum';
 
 export default class ProjectService {
   public static async create(project: ProjectI): Promise<ResponseI> {
@@ -401,32 +404,26 @@ export default class ProjectService {
         return response;
       }
 
-      const userExists: ProjectParticipationI | null = await ProjectParticipation.findOne({
+      const existingParticipation = await ProjectParticipation.findOne({
         where: { userId: projectMember.userId, projectId },
       });
 
-      if (userExists && userExists.accepted) {
+      if (existingParticipation) {
         response = {
-          message: 'Usuário já participa deste projeto.',
+          message: existingParticipation.accepted
+            ? 'Usuário já participa deste projeto.'
+            : 'Um convite já foi enviado para este usuário.',
           success: false,
         };
         return response;
       }
 
-      if (userExists && !userExists.accepted) {
-        response = {
-          message: 'A solicitação de participação já foi enviada, mas ainda não foi aceita.',
-          success: false,
-        };
-        return response;
-      }
-
-      const newProjectMember: ProjectParticipationI | null = await ProjectParticipation.create({
+      const newProjectMember = await ProjectParticipation.create({
         userId: projectMember.userId,
         projectId: projectId,
         role: projectMember.role,
-        accepted: !!projectMember.accepted,
         invitedAt: new Date(),
+        accepted: true,
       });
 
       if (!newProjectMember) {
@@ -437,12 +434,12 @@ export default class ProjectService {
         return response;
       }
 
-      const memberWithUser = await ProjectParticipation.findOne({
+      const addedMemberWithUser = await ProjectParticipation.findOne({
         where: { id: newProjectMember.id },
         include: [{ model: User, attributes: ['id', 'fullName', 'username', 'image'] }],
       });
 
-      if (!memberWithUser) {
+      if (!addedMemberWithUser) {
         response = {
           message: 'Membro adicionado, mas não foi possível buscar os dados completos.',
           success: false,
@@ -453,17 +450,150 @@ export default class ProjectService {
       response = {
         message: 'Membro adicionado ao projeto com sucesso.',
         success: true,
-        data: memberWithUser,
+        data: addedMemberWithUser,
       };
-
       return response;
     } catch (err) {
       console.log(err);
       let response: ResponseI = {
-        message: 'Erro ao adicionar usuário ao projeto, consulte o Log.',
+        message: 'Erro ao adicionar membro ao projeto, consulte o Log.',
         success: false,
       };
       return response;
+    }
+  }
+
+  public static async inviteUserToProject(
+    projectId: number,
+    projectMember: ProjectParticipationI,
+    inviterId: number,
+    io: SocketIOServer
+  ): Promise<ResponseI> {
+    try {
+      if (!projectId || !projectMember || !projectMember.userId || typeof projectMember.role !== 'number') {
+        return { message: 'Dados incompletos para convidar membro ao projeto.', success: false };
+      }
+
+      const project = await Project.findByPk(projectId);
+      if (!project) {
+        return { message: 'Projeto não encontrado.', success: false };
+      }
+
+      const userToInvite = await User.findByPk(projectMember.userId);
+      if (!userToInvite) {
+        return { message: 'Usuário a ser convidado não encontrado.', success: false };
+      }
+
+      const existingParticipation = await ProjectParticipation.findOne({
+        where: { userId: projectMember.userId, projectId },
+      });
+
+      if (existingParticipation) {
+        return {
+          message: existingParticipation.accepted
+            ? 'Usuário já participa deste projeto.'
+            : 'Um convite já foi enviado para este usuário.',
+          success: false,
+        };
+      }
+
+      const inviter = await User.findByPk(inviterId);
+      if (!inviter) {
+        return { message: 'Convidador não encontrado.', success: false };
+      }
+
+      const invitationToken = crypto.randomBytes(32).toString('hex');
+
+      const newProjectMember = await ProjectParticipation.create({
+        userId: projectMember.userId,
+        projectId: projectId,
+        role: projectMember.role,
+        accepted: false,
+        invitedAt: new Date(),
+        invitationToken: invitationToken,
+      });
+
+      await NotificationService.create(
+        {
+          userId: userToInvite.id!,
+          type: NotificationType.PROJECT_INVITATION,
+          title: 'Convite para Projeto',
+          message: `${inviter.fullName} convidou você para o projeto "${project.name}".`,
+          metadata: {
+            projectId: project.id,
+            projectName: project.name,
+            inviterId: inviter.id,
+            inviterName: inviter.fullName,
+          },
+        },
+        io
+      );
+
+      EmailService.sendEmail(userToInvite.email, 'Você foi convidado para um projeto!', 'project_invitation', {
+        fullName: userToInvite.fullName,
+        inviterName: inviter.fullName,
+        projectName: project.name,
+        acceptUrl: `${process.env.FRONT_END_URL}/accept-invitation/${invitationToken}`,
+      });
+
+      return { message: 'Convite enviado com sucesso.', success: true, data: newProjectMember };
+    } catch (err) {
+      console.log(err);
+      return { message: 'Erro ao convidar usuário para o projeto, consulte o Log.', success: false };
+    }
+  }
+
+  public static async acceptInvitation(
+    invitationToken: string,
+    userId: number,
+    io: SocketIOServer
+  ): Promise<ResponseI> {
+    try {
+      if (!invitationToken) {
+        return { message: 'Token de convite inválido.', success: false };
+      }
+
+      const participation = await ProjectParticipation.findOne({
+        where: { invitationToken: invitationToken, userId: userId },
+        include: [Project, User],
+      });
+
+      if (!participation) {
+        return { message: 'Convite não encontrado ou inválido para este usuário.', success: false };
+      }
+
+      if (participation.accepted) {
+        return { message: 'Este convite já foi aceito.', success: false };
+      }
+
+      await participation.update({
+        accepted: true,
+        acceptedAt: new Date(),
+        invitationToken: null,
+      });
+
+      const project = participation.project!;
+      const userWhoAccepted = participation.user!;
+
+      await NotificationService.create(
+        {
+          userId: project.creatorId,
+          type: NotificationType.INVITATION_ACCEPTED,
+          title: 'Convite Aceito',
+          message: `${userWhoAccepted.fullName} aceitou seu convite para o projeto "${project.name}".`,
+          metadata: { projectId: project.id, userId: userWhoAccepted.id, userName: userWhoAccepted.fullName },
+        },
+        io
+      );
+
+      return {
+        message: `Você agora faz parte do projeto "${project.name}".`,
+        success: true,
+        data: { projectId: project.id },
+      };
+    } catch (err) {
+      console.log(err);
+      return { message: 'Erro ao aceitar convite, consulte o Log.', success: false };
     }
   }
 
