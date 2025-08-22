@@ -2,6 +2,13 @@ import { Table, Column, Model, DataType, BelongsTo, ForeignKey } from 'sequelize
 import { User, UserI } from './user.model';
 import { NotificationType } from '../enums/notification_type.enum';
 
+export interface NotificationMetadataI {
+  inviterId?: number | undefined;
+  inviterName?: string | undefined;
+  projectId?: number | undefined;
+  projectName?: string;
+}
+
 export interface NotificationI {
   id?: number;
   userId: number;
@@ -10,7 +17,8 @@ export interface NotificationI {
   title: string;
   message: string;
   isRead: boolean;
-  metadata?: object;
+  metadata?: NotificationMetadataI;
+  invitationToken?: string;
 }
 
 @Table({
@@ -65,5 +73,11 @@ export class Notification extends Model implements NotificationI {
     type: DataType.JSONB,
     allowNull: true,
   })
-  metadata?: object;
+  metadata?: NotificationMetadataI;
+
+  @Column({
+    type: DataType.STRING,
+    allowNull: true,
+  })
+  invitationToken?: string;
 }

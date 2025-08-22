@@ -11,6 +11,9 @@ import { Server as SocketIOServer } from 'socket.io';
 import NotificationService from './notification.service';
 import EmailService from './email.service';
 import { NotificationType } from '../enums/notification_type.enum';
+import { RolesEnum, RolesValues } from '../enums/roles.enum';
+import { toBase64 } from 'openai/core';
+import { Notification, NotificationI } from '../models/notification.model';
 
 export default class ProjectService {
   public static async create(project: ProjectI): Promise<ResponseI> {
@@ -22,15 +25,6 @@ export default class ProjectService {
       if (!project || !project.name) {
         response = {
           message: 'Projeto inválido, verifique os dados.',
-          success: false,
-        };
-        return response;
-      }
-
-      const projectExists = await Project.findOne({ where: { name: project.name } });
-      if (projectExists) {
-        response = {
-          message: 'Já existe um projeto com este nome.',
           success: false,
         };
         return response;
@@ -343,7 +337,7 @@ export default class ProjectService {
       const filteredProjects: ProjectI[] = plainProjects.filter(project => {
         const isCreator = project.creatorId === userId;
         const isParticipant = project.participation?.some(
-          (participation: ProjectParticipationI) => participation.userId === userId
+          (participation: ProjectParticipationI) => participation.userId === userId && participation.accepted
         );
         return isCreator || isParticipant;
       });
@@ -470,18 +464,29 @@ export default class ProjectService {
     io: SocketIOServer
   ): Promise<ResponseI> {
     try {
+      let response: ResponseI = {
+        message: '',
+        success: false,
+      };
+
       if (!projectId || !projectMember || !projectMember.userId || typeof projectMember.role !== 'number') {
-        return { message: 'Dados incompletos para convidar membro ao projeto.', success: false };
+        response = {
+          message: 'Dados incompletos para convidar usuário para o projeto.',
+          success: false,
+        };
+        return response;
       }
 
       const project = await Project.findByPk(projectId);
       if (!project) {
-        return { message: 'Projeto não encontrado.', success: false };
+        response = { message: 'Projeto não encontrado.', success: false };
+        return response;
       }
 
       const userToInvite = await User.findByPk(projectMember.userId);
       if (!userToInvite) {
-        return { message: 'Usuário a ser convidado não encontrado.', success: false };
+        response = { message: 'Usuário a ser convidado não encontrado.', success: false };
+        return response;
       }
 
       const existingParticipation = await ProjectParticipation.findOne({
@@ -489,17 +494,19 @@ export default class ProjectService {
       });
 
       if (existingParticipation) {
-        return {
+        response = {
           message: existingParticipation.accepted
             ? 'Usuário já participa deste projeto.'
             : 'Um convite já foi enviado para este usuário.',
           success: false,
         };
+        return response;
       }
 
       const inviter = await User.findByPk(inviterId);
       if (!inviter) {
-        return { message: 'Convidador não encontrado.', success: false };
+        response = { message: 'Convidador não encontrado.', success: false };
+        return response;
       }
 
       const invitationToken = crypto.randomBytes(32).toString('hex');
@@ -513,12 +520,19 @@ export default class ProjectService {
         invitationToken: invitationToken,
       });
 
-      await NotificationService.create(
+      const message: string = `Você foi convidado para participar do projeto "${project.name}" como ${
+        RolesValues.find(role => {
+          return role.id === projectMember.role;
+        })?.name
+      }.`;
+
+      const notification = await NotificationService.create(
         {
           userId: userToInvite.id!,
           type: NotificationType.PROJECT_INVITATION,
           title: 'Convite para Projeto',
-          message: `${inviter.fullName} convidou você para o projeto "${project.name}".`,
+          message,
+          invitationToken,
           metadata: {
             projectId: project.id,
             projectName: project.name,
@@ -529,25 +543,45 @@ export default class ProjectService {
         io
       );
 
+      if (!notification.success) {
+        response = { message: 'Erro ao enviar convite.', success: false };
+        return response;
+      }
+
       EmailService.sendEmail(userToInvite.email, 'Você foi convidado para um projeto!', 'project_invitation', {
         fullName: userToInvite.fullName,
         inviterName: inviter.fullName,
         projectName: project.name,
-        acceptUrl: `${process.env.FRONT_END_URL}/accept-invitation/${invitationToken}`,
+        acceptUrl: `${process.env.FRONT_END_URL}/p/notificacoes/${toBase64(notification.data.id.toString())}`,
       });
 
-      return { message: 'Convite enviado com sucesso.', success: true, data: newProjectMember };
+      const addedMemberWithUser = await ProjectParticipation.findOne({
+        where: { id: newProjectMember.id },
+        include: [{ model: User, attributes: ['id', 'fullName', 'username', 'image'] }],
+      });
+
+      if (!addedMemberWithUser) {
+        response = {
+          message: 'Membro adicionado, mas não foi possível buscar os dados completos.',
+          success: false,
+        };
+        return response;
+      }
+
+      response = {
+        message: 'Convite enviado com sucesso.',
+        success: true,
+        data: newProjectMember,
+      };
+
+      return response;
     } catch (err) {
       console.log(err);
       return { message: 'Erro ao convidar usuário para o projeto, consulte o Log.', success: false };
     }
   }
 
-  public static async acceptInvitation(
-    invitationToken: string,
-    userId: number,
-    io: SocketIOServer
-  ): Promise<ResponseI> {
+  public static async acceptInvitation(invitationToken: string, userId: number): Promise<ResponseI> {
     try {
       if (!invitationToken) {
         return { message: 'Token de convite inválido.', success: false };
@@ -562,34 +596,16 @@ export default class ProjectService {
         return { message: 'Convite não encontrado ou inválido para este usuário.', success: false };
       }
 
-      if (participation.accepted) {
-        return { message: 'Este convite já foi aceito.', success: false };
-      }
-
       await participation.update({
         accepted: true,
         acceptedAt: new Date(),
         invitationToken: null,
       });
 
-      const project = participation.project!;
-      const userWhoAccepted = participation.user!;
-
-      await NotificationService.create(
-        {
-          userId: project.creatorId,
-          type: NotificationType.INVITATION_ACCEPTED,
-          title: 'Convite Aceito',
-          message: `${userWhoAccepted.fullName} aceitou seu convite para o projeto "${project.name}".`,
-          metadata: { projectId: project.id, userId: userWhoAccepted.id, userName: userWhoAccepted.fullName },
-        },
-        io
-      );
-
       return {
-        message: `Você agora faz parte do projeto "${project.name}".`,
+        message: `Você agora faz parte do projeto "${participation.project?.name}".`,
         success: true,
-        data: { projectId: project.id },
+        data: participation,
       };
     } catch (err) {
       console.log(err);
@@ -682,6 +698,22 @@ export default class ProjectService {
           success: false,
         };
         return response;
+      }
+
+      const userExists: ProjectParticipationI | null = await ProjectParticipation.findOne({
+        where: { userId: userId, projectId },
+      });
+
+      if (!userExists) {
+        response = {
+          message: 'Usuário não encontrado neste projeto.',
+          success: false,
+        };
+        return response;
+      }
+
+      if (userExists.invitationToken) {
+        await NotificationService.removeInvitationToken(userExists.invitationToken);
       }
 
       const projectMember: number | null = await ProjectParticipation.destroy({

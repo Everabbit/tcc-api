@@ -7,6 +7,10 @@ export default class NotificationRoute {
   private middleware: BasicMiddleware = new BasicMiddleware();
 
   public createInstances(app: Application) {
-    app.route('/notifications/:userId').get(this.middleware.validateToken, this.controller.getNotifications);
+    app.route('/notifications').get(this.middleware.validateToken, this.controller.getNotifications);
+    app
+      .route('/notifications/read/:notificationId')
+      .put(this.middleware.validateToken, this.controller.getNotification);
+    app.route('/notifications/readall').put(this.middleware.validateToken, this.controller.markAllRead);
   }
 }

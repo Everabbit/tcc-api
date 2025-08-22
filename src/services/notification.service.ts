@@ -28,7 +28,10 @@ export default class NotificationService {
         isRead: false,
       });
 
-      io.to(notificationData.userId.toString()).emit('new_notification', newNotification);
+      if (io) {
+        io.to(notificationData.userId.toString()).emit('newNotification', newNotification);
+        console.log(`Evento 'newNotification' emitido para o usuário: ${notificationData.userId}`);
+      }
 
       response = {
         message: 'Notificação criada com sucesso.',
@@ -40,6 +43,78 @@ export default class NotificationService {
       console.log(err);
       return {
         message: 'Erro ao criar notificação, consulte o Log.',
+        success: false,
+      };
+    }
+  }
+
+  public static async get(notificationId: number): Promise<ResponseI> {
+    try {
+      let response: ResponseI = {
+        message: '',
+        success: false,
+      };
+
+      if (!notificationId) {
+        response = { message: 'ID da notificação não fornecido.', success: false };
+        return response;
+      }
+
+      const notification = await Notification.findByPk(notificationId);
+
+      if (!notification) {
+        response = { message: 'Notificação não encontrada.', success: false };
+        return response;
+      }
+
+      response = {
+        message: 'Notificação encontrada com sucesso.',
+        success: true,
+        data: notification,
+      };
+      return response;
+    } catch (err) {
+      console.log(err);
+      return {
+        message: 'Erro ao buscar notificação, consulte o Log.',
+        success: false,
+      };
+    }
+  }
+
+  public static async removeInvitationToken(invitationToken: string): Promise<ResponseI> {
+    try {
+      let response: ResponseI = {
+        message: '',
+        success: false,
+      };
+
+      if (!invitationToken) {
+        response = { message: 'ID da notificação não fornecido.', success: false };
+        return response;
+      }
+
+      const [rowsAffected] = await Notification.update(
+        { invitationToken: null, isRead: true },
+        {
+          where: { invitationToken },
+        }
+      );
+
+      if (rowsAffected === 0) {
+        response = { message: 'Notificação não encontrada.', success: false };
+        return response;
+      }
+
+      response = {
+        message: 'Token de convite removido com sucesso.',
+        success: true,
+      };
+      return response;
+    } catch (err) {
+      console.log(err);
+      return {
+        message: 'Erro ao remover token de convite, consulte o Log.',
         success: false,
       };
     }
@@ -77,6 +152,39 @@ export default class NotificationService {
     }
   }
 
+  public static async markAllRead(userId: number): Promise<ResponseI> {
+    try {
+      let response: ResponseI = {
+        message: '',
+        success: false,
+      };
+
+      if (!userId) {
+        response = { message: 'ID do usuário não fornecido.', success: false };
+        return response;
+      }
+
+      await Notification.update(
+        { isRead: true },
+        {
+          where: { userId: userId, isRead: false },
+        }
+      );
+
+      response = {
+        message: 'Todas as notificações foram marcadas como lidas.',
+        success: true,
+      };
+      return response;
+    } catch (err) {
+      console.log(err);
+      return {
+        message: 'Erro ao marcar notificações como lidas, consulte o Log.',
+        success: false,
+      };
+    }
+  }
+
   public static async markAsRead(notificationId: number): Promise<ResponseI> {
     try {
       let response: ResponseI = {
@@ -89,60 +197,27 @@ export default class NotificationService {
         return response;
       }
 
-      const notification = await Notification.findByPk(notificationId);
+      const [rowsAffected] = await Notification.update(
+        { isRead: true },
+        {
+          where: { id: notificationId, isRead: false },
+        }
+      );
 
-      if (!notification) {
-        response = { message: 'Notificação não encontrada.', success: false };
+      if (rowsAffected === 0) {
+        response = { message: 'Notificação não encontrada ou já marcada como lida.', success: false };
         return response;
       }
-
-      await notification.update({ isRead: true });
 
       response = {
         message: 'Notificação marcada como lida com sucesso.',
         success: true,
-        data: notification,
       };
       return response;
     } catch (err) {
       console.log(err);
       return {
         message: 'Erro ao marcar notificação como lida, consulte o Log.',
-        success: false,
-      };
-    }
-  }
-
-  public static async delete(notificationId: number): Promise<ResponseI> {
-    try {
-      let response: ResponseI = {
-        message: '',
-        success: false,
-      };
-
-      if (!notificationId) {
-        response = { message: 'ID da notificação não fornecido.', success: false };
-        return response;
-      }
-
-      const deletedRows = await Notification.destroy({
-        where: { id: notificationId },
-      });
-
-      if (deletedRows === 0) {
-        response = { message: 'Notificação não encontrada.', success: false };
-        return response;
-      }
-
-      response = {
-        message: 'Notificação excluída com sucesso.',
-        success: true,
-      };
-      return response;
-    } catch (err) {
-      console.log(err);
-      return {
-        message: 'Erro ao excluir notificação, consulte o Log.',
         success: false,
       };
     }

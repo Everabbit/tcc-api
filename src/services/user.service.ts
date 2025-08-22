@@ -1319,7 +1319,7 @@ export default class UserService {
       }
 
       const participation = await ProjectParticipation.findOne({
-        where: { userId: userId, projectId: projectId },
+        where: { userId: userId, projectId: projectId, accepted: true },
       });
 
       if (participation) {

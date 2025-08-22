@@ -12,6 +12,8 @@ import { verifyPermission } from '../utils/roles.utils';
 import { ProjectParticipationI } from '../models/project_participation.model';
 import UserService from '../services/user.service';
 import { User } from '../models/user.model';
+import NotificationService from '../services/notification.service';
+import { NotificationType } from '../enums/notification_type.enum';
 
 export default class ProjectController {
   public async createProject(req: Request, res: Response) {
@@ -417,6 +419,74 @@ export default class ProjectController {
       response = {
         message: 'Membros adicionados ao projeto com sucesso!',
         success: true,
+      };
+      return ResponseValidator.response(req, res, HttpStatus.OK, response);
+    } catch (err) {
+      console.log(err);
+      const response: ResponseI = {
+        message: `Erro: ${err}`,
+        success: false,
+      };
+      return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
+    }
+  }
+
+  public async acceptUserOnProject(req: Request, res: Response) {
+    try {
+      let response: ResponseI = {
+        message: '',
+        success: false,
+      };
+
+      const userId: number = parseInt(req.params.userId);
+      const invitationToken: string = req.body.invitationToken;
+
+      if (!invitationToken) {
+        response = {
+          message: 'Token de convite não fornecido.',
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.BAD_REQUEST, response);
+      }
+
+      const acceptResponse: ResponseI = await ProjectService.acceptInvitation(invitationToken, userId);
+
+      const participation: ProjectParticipationI = acceptResponse.data;
+
+      if (!acceptResponse.success) {
+        response = {
+          message: acceptResponse.message,
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
+      }
+
+      const project = participation.project!;
+      const userWhoAccepted = participation.user!;
+
+      await NotificationService.removeInvitationToken(invitationToken);
+
+      const io = (req as any).io;
+
+      await NotificationService.create(
+        {
+          userId: project.creatorId,
+          type: NotificationType.INVITATION_ACCEPTED,
+          title: 'Convite Aceito',
+          message: `${userWhoAccepted.fullName} aceitou o convite e agora participa do seu projeto "${project.name}".`,
+        },
+        io
+      );
+
+      if (io) {
+        io.to(project.id).emit('memberUpdated', participation);
+        console.log(`Evento 'memberUpdated' emitido para a sala: ${project.id}`);
+      }
+
+      response = {
+        message: acceptResponse.message,
+        success: true,
+        data: acceptResponse.data,
       };
       return ResponseValidator.response(req, res, HttpStatus.OK, response);
     } catch (err) {

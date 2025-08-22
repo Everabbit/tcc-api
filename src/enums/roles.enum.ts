@@ -4,3 +4,22 @@ export enum RolesEnum {
   DEVELOPER = 3,
   VIEWER = 4,
 }
+
+export const RolesValues = [
+  {
+    id: RolesEnum.ADMIN,
+    name: 'Administrador',
+  },
+  {
+    id: RolesEnum.MANAGER,
+    name: 'Gerente',
+  },
+  {
+    id: RolesEnum.DEVELOPER,
+    name: 'Desenvolvedor',
+  },
+  {
+    id: RolesEnum.VIEWER,
+    name: 'Visualizador',
+  },
+];

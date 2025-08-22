@@ -1,13 +1,12 @@
 Ainda é necessário no TCC:
 
-Usuário aceitar participar de projeto
 Tela de Dashboard completa
 
 Lançar sistema em site funcional
 
 
 Bugs:
-
+O usuário pode se remover do projeto sem uma função específica
 
 Sugestões:
 Dar mais vida para o sistema
