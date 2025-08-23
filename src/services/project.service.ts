@@ -12,8 +12,7 @@ import NotificationService from './notification.service';
 import EmailService from './email.service';
 import { NotificationType } from '../enums/notification_type.enum';
 import { RolesEnum, RolesValues } from '../enums/roles.enum';
-import { toBase64 } from 'openai/core';
-import { Notification, NotificationI } from '../models/notification.model';
+import { toBase64 } from '../utils/transform.utils';
 
 export default class ProjectService {
   public static async create(project: ProjectI): Promise<ResponseI> {

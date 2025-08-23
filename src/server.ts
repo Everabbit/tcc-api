@@ -30,17 +30,8 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   (req as any).io = io;
   next();
 });
-app.use((req, res, next) => {
-  const contentType = req.headers['content-type'];
-
-  if (contentType?.includes('application/json')) {
-    express.json()(req, res, next);
-  } else if (contentType?.includes('application/x-www-form-urlencoded')) {
-    express.urlencoded({ extended: true })(req, res, next);
-  } else {
-    next();
-  }
-});
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
 // Rotas
