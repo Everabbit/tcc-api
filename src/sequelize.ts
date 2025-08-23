@@ -23,7 +23,6 @@ if (!process.env.DATABASE_URL) {
 const isProduction = process.env.NODE_ENV === 'production';
 
 const sequelize = new Sequelize(process.env.DATABASE_URL, {
-  schema: process.env.DATABASE_SCHEMA,
   dialectOptions: isProduction
     ? {
         ssl: {
