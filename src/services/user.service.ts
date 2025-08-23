@@ -14,6 +14,10 @@ import { createSearchableHash, decrypt, encrypt } from '../helpers/encryption.he
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { EmailChangeRequest } from '../models/email_change_request.model';
+import { ProjectStatus } from '../enums/project_status.enum';
+import { Task } from '../models/task.models';
+import { TaskStatusEnum } from '../enums/status.enum';
+import { DashboardStatI } from '../interfaces/dashboard.interface';
 
 async function gerarHash(senha: string): Promise<string> {
   const saltRounds: number = Number(process.env.SALT);
@@ -1338,6 +1342,153 @@ export default class UserService {
       console.log(err);
       let response: ResponseI = {
         message: 'Erro ao buscar função do usuário no projeto, consulte o Log.',
+        success: false,
+      };
+      return response;
+    }
+  }
+
+  public static async getDashboardStats(userId: number): Promise<ResponseI> {
+    try {
+      let response: ResponseI = {
+        message: '',
+        success: false,
+      };
+
+      if (!userId) {
+        return (response = {
+          message: 'Id do usuário não informado!',
+          success: false,
+        });
+      }
+
+      const activeProjectsCount = await Project.count({
+        where: {
+          status: {
+            [Op.eq]: ProjectStatus.ACTIVE,
+          },
+        },
+        include: [
+          {
+            model: ProjectParticipation,
+            where: {
+              userId: userId,
+              accepted: true,
+            },
+          },
+        ],
+      });
+
+      const allTasks = await Task.findAll({
+        where: {
+          assigneeId: userId,
+        },
+      });
+
+      const totalTasks = allTasks.length;
+      const completedTasks = allTasks.filter(task => task.status === TaskStatusEnum.DONE).length;
+      const pendingTasks = allTasks.filter(task => task.status === TaskStatusEnum.PENDING).length;
+      const inProgressTasks = allTasks.filter(task => task.status === TaskStatusEnum.IN_PROGRESS).length;
+      const testingTasks = allTasks.filter(task => task.status === TaskStatusEnum.REVIEW).length;
+      const overdueTasks = allTasks.filter(
+        task => task.deadline && new Date(task.deadline) < new Date() && task.status !== TaskStatusEnum.DONE
+      ).length;
+
+      let overallProgress = '0%';
+      if (totalTasks > 0) {
+        overallProgress = `${((completedTasks / totalTasks) * 100).toFixed(0)}%`;
+      }
+
+      const upcomingDeadlinesCount = await ProjectParticipation.count({
+        where: {
+          userId: userId,
+          accepted: true,
+        },
+        include: [
+          {
+            model: Project,
+            attributes: [],
+            where: {
+              deadline: {
+                [Op.gte]: new Date(),
+              },
+              status: {
+                [Op.eq]: ProjectStatus.ACTIVE,
+              },
+            },
+          },
+        ],
+      });
+
+      const stats: DashboardStatI[] = [
+        {
+          title: 'PROJETOS ATIVOS',
+          value: activeProjectsCount.toString(),
+          icon: 'mdi-folder-multiple',
+          color: 'primary',
+          link: '/p/projetos',
+        },
+        {
+          title: 'PROJETOS COM PRAZOS PRÓXIMOS',
+          value: upcomingDeadlinesCount.toString(),
+          icon: 'mdi-calendar-clock',
+          color: 'negative',
+          link: '/p/projetos',
+        },
+        {
+          title: 'TAREFAS PENDENTES',
+          value: pendingTasks.toString(),
+          icon: 'mdi-clipboard-list',
+          color: 'info',
+          link: '/p/minhas_tarefas',
+        },
+        {
+          title: 'TAREFAS EM PROGRESSO',
+          value: inProgressTasks.toString(),
+          icon: 'mdi-progress-check',
+          color: 'secondary',
+          link: '/p/minhas_tarefas',
+        },
+        {
+          title: 'TAREFAS EM TESTE',
+          value: testingTasks.toString(),
+          icon: 'mdi-flask-outline',
+          color: 'accent',
+          link: '/p/minhas_tarefas',
+        },
+        {
+          title: 'TAREFAS CONCLUÍDAS',
+          value: completedTasks.toString(),
+          icon: 'mdi-check-circle',
+          color: 'positive',
+          link: '/p/minhas_tarefas',
+        },
+        {
+          title: 'TAREFAS ATRASADAS',
+          value: overdueTasks.toString(),
+          icon: 'mdi-alert-circle',
+          color: 'negative',
+          link: '/p/minhas_tarefas',
+        },
+        {
+          title: 'PROGRESSO GERAL',
+          value: overallProgress,
+          icon: 'mdi-chart-donut',
+          color: 'warning',
+          link: '/p/minhas_tarefas',
+        },
+      ];
+
+      response = {
+        message: 'Estatísticas do dashboard obtidas com sucesso!',
+        success: true,
+        data: stats,
+      };
+      return response;
+    } catch (err) {
+      console.log(err);
+      let response: ResponseI = {
+        message: 'Erro ao buscar estatísticas do dashboard, consulte o Log.',
         success: false,
       };
       return response;

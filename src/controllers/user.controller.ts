@@ -7,6 +7,12 @@ import UserService from '../services/user.service';
 import { fromBase64, toBase64 } from '../utils/transform.utils';
 import { PasswordChangeI } from '../interfaces/password.interface';
 import EmailService from '../services/email.service';
+import { DashboardI } from '../interfaces/dashboard.interface';
+import ProjectService from '../services/project.service';
+import { ProjectI } from '../models/project.model';
+import { ProjectStatus } from '../enums/project_status.enum';
+import NotificationService from '../services/notification.service';
+import { NotificationI } from '../models/notification.model';
 
 export default class UserController {
   public async createEmailRequest(req: Request, res: Response) {
@@ -1044,6 +1050,89 @@ export default class UserController {
         message: 'Função do usuário no projeto encontrada!',
         success: true,
         data: role.data,
+      };
+      return ResponseValidator.response(req, res, HttpStatus.OK, response);
+    } catch (err) {
+      console.log(err);
+      const response: ResponseI = {
+        message: `Erro: ${err}`,
+        success: false,
+        data: false,
+      };
+      return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
+    }
+  }
+
+  public async getDashboardInfo(req: Request, res: Response) {
+    try {
+      let response: ResponseI = {
+        message: '',
+        success: false,
+      };
+
+      const userId: number = parseInt(req.params.userId);
+
+      if (!userId) {
+        response = {
+          message: 'Id do usuário não informado!',
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.BAD_REQUEST, response);
+      }
+
+      const dashboard: DashboardI = {
+        stats: [],
+        projects: [],
+        notifications: [],
+      };
+
+      const dashboardStats: ResponseI = await UserService.getDashboardStats(userId);
+
+      if (!dashboardStats.success) {
+        response = {
+          message: dashboardStats.message,
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.NOT_FOUND, response);
+      }
+
+      const dashboardProjects: ResponseI = await ProjectService.list(userId);
+
+      if (!dashboardProjects.success) {
+        response = {
+          message: dashboardProjects.message,
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.NOT_FOUND, response);
+      }
+
+      dashboardProjects.data = dashboardProjects.data.filter(
+        (project: ProjectI) => project.status === ProjectStatus.ACTIVE
+      );
+
+      const dashboardNotifications: ResponseI = await NotificationService.getAll(userId);
+
+      if (!dashboardNotifications.success) {
+        response = {
+          message: dashboardNotifications.message,
+          success: false,
+        };
+      }
+
+      dashboardNotifications.data = dashboardNotifications.data.filter(
+        (notification: NotificationI) => notification.isRead === false
+      );
+
+      dashboard.stats = dashboardStats.data;
+      dashboard.projects = dashboardProjects.data;
+      dashboard.notifications = dashboardNotifications.data;
+
+      response.data = dashboard;
+
+      response = {
+        message: 'Informações do dashboard encontradas!',
+        success: true,
+        data: dashboard,
       };
       return ResponseValidator.response(req, res, HttpStatus.OK, response);
     } catch (err) {

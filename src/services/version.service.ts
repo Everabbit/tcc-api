@@ -20,7 +20,7 @@ export default class VersionService {
       const projectExists = await Version.findOne({ where: { name: version.name, projectId: version.projectId } });
       if (projectExists) {
         response = {
-          message: 'Já existe uma versão com este nome.',
+          message: 'Já existe uma versão neste projeto com este nome.',
           success: false,
         };
         return response;
