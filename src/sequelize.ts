@@ -16,14 +16,22 @@ import { ChangePasswordRequest } from './models/change_password_request.model';
 import { EmailChangeRequest } from './models/email_change_request.model';
 import { Notification } from './models/notification.model';
 
-const sequelize = new Sequelize({
-  database: process.env.DATABASE,
+if (!process.env.DATABASE_URL) {
+  throw new Error('DATABASE_URL is not set in the environment variables.');
+}
+
+const isProduction = process.env.NODE_ENV === 'production';
+
+const sequelize = new Sequelize(process.env.DATABASE_URL, {
   schema: process.env.DATABASE_SCHEMA,
-  dialect: process.env.DATABASE_DIALECT as any,
-  username: process.env.DATABASE_USERNAME,
-  password: process.env.DATABASE_PASSWORD,
-  host: process.env.DATABASE_HOST,
-  port: Number(process.env.DATABASE_PORT),
+  dialectOptions: isProduction
+    ? {
+        ssl: {
+          require: true,
+          rejectUnauthorized: false,
+        },
+      }
+    : {},
   models: [
     User,
     Project,
