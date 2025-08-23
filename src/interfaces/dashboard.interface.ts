@@ -1,3 +1,4 @@
+import { NotificationI } from '../models/notification.model';
 import { ProjectI } from '../models/project.model';
 
 export interface DashboardI {
