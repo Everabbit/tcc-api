@@ -1,44 +1,11 @@
 import { ResponseI } from '../interfaces/response.interface';
-import nodemailer, { Transporter } from 'nodemailer';
 import handlebars from 'handlebars';
 import fs from 'fs';
 import path from 'path';
-
-const transporter: Transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST,
-  port: Number(process.env.EMAIL_PORT),
-  secure: process.env.EMAIL_SECURE === 'true',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
+import { Resend } from 'resend';
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export default class EmailService {
-  public static async verifyConnection(): Promise<ResponseI> {
-    try {
-      let response: ResponseI = {
-        message: '',
-        success: false,
-      };
-
-      await transporter.verify();
-
-      response = {
-        message: 'Conexão com o servidor de e-mail verificada com sucesso!',
-        success: true,
-      };
-      return response;
-    } catch (err: any) {
-      console.log(err);
-      let response: ResponseI = {
-        message: `Erro ao verificar conexão com o servidor de e-mail: ${err.message}`,
-        success: false,
-      };
-      return response;
-    }
-  }
-
   public static async sendEmail(
     to: string,
     subject: string,
@@ -56,7 +23,7 @@ export default class EmailService {
       const template = handlebars.compile(source);
       const html = template(context);
 
-      await transporter.sendMail({
+      await resend.emails.send({
         from: `"${process.env.EMAIL_ALIAS}" <${process.env.EMAIL_USER}>`,
         to,
         subject,
