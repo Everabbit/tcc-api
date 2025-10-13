@@ -533,15 +533,6 @@ export default class TaskService {
             attributes: ['id', 'fullName', 'username', 'image'],
           },
           {
-            model: Comment,
-            include: [
-              {
-                model: User,
-                attributes: ['id', 'fullName', 'username', 'image'],
-              },
-            ],
-          },
-          {
             model: TaskTag,
             include: [
               {
@@ -549,6 +540,7 @@ export default class TaskService {
                 attributes: ['id', 'name', 'color'],
               },
             ],
+            separate: true, // Otimiza a consulta de tags
           },
           {
             model: Version,
@@ -570,6 +562,20 @@ export default class TaskService {
         };
         return response;
       }
+
+      // Busca os comentários separadamente e com ordenação
+      const comments = await Comment.findAll({
+        where: { taskId: taskId },
+        include: [
+          {
+            model: User,
+            attributes: ['id', 'fullName', 'username', 'image'],
+          },
+        ],
+        order: [['createdAt', 'ASC']],
+      });
+
+      task.comments = comments;
 
       response = {
         message: 'Tarefa encontrada com sucesso.',
