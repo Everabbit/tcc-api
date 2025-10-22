@@ -15,6 +15,7 @@ import { EmailRequest } from './models/email_request.model';
 import { ChangePasswordRequest } from './models/change_password_request.model';
 import { EmailChangeRequest } from './models/email_change_request.model';
 import { Notification } from './models/notification.model';
+import { TaskHistory } from './models/task_history.model';
 
 if (!process.env.DATABASE_URL) {
   throw new Error('DATABASE_URL is not set in the environment variables.');
@@ -48,6 +49,7 @@ const sequelize = new Sequelize(process.env.DATABASE_URL, {
     ChangePasswordRequest,
     EmailChangeRequest,
     Notification,
+    TaskHistory,
   ], // ARQUIVOS DE MODEL
   logging: false, // Opcional: desativa logs de SQL no console
 });

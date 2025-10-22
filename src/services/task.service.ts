@@ -4,13 +4,14 @@ import { Attachment } from '../models/attachment.model';
 import { Task, TaskI } from '../models/task.models';
 import * as fs from 'fs';
 import { User } from '../models/user.model';
-import { TaskStatusEnum } from '../enums/status.enum';
+import { TaskStatus, TaskStatusEnum } from '../enums/status.enum';
 import { Comment, CommentI } from '../models/comment.model';
 import { Tag } from '../models/tag.model';
 import TaskTag from '../models/task_tag.model';
 import { Version } from '../models/version.model';
 import { Project } from '../models/project.model';
 import { deleteFile, uploadFile } from '../utils/files.utils';
+import { TaskHistory } from '../models/task_history.model';
 
 export default class TaskService {
   public static async create(task: TaskI): Promise<ResponseI> {
@@ -60,7 +61,7 @@ export default class TaskService {
     }
   }
 
-  public static async update(task: TaskI): Promise<ResponseI> {
+  public static async update(task: TaskI, userId: number): Promise<ResponseI> {
     try {
       let response: ResponseI = {
         message: '',
@@ -84,6 +85,35 @@ export default class TaskService {
         return response;
       }
 
+      const oldTask = taskExists.get({ plain: true });
+
+      const changes: { field: string; oldValue: any; newValue: any }[] = [];
+
+      if (task.title !== undefined && task.title !== oldTask.title) {
+        changes.push({ field: 'title', oldValue: oldTask.title, newValue: task.title });
+      }
+      if (task.description !== undefined && task.description !== oldTask.description) {
+        changes.push({ field: 'description', oldValue: oldTask.description, newValue: task.description });
+      }
+      if (task.assigneeId !== undefined && task.assigneeId !== oldTask.assigneeId) {
+        changes.push({ field: 'assigneeId', oldValue: oldTask.assigneeId, newValue: task.assigneeId });
+      }
+      if (task.priority !== undefined && task.priority !== oldTask.priority) {
+        changes.push({ field: 'priority', oldValue: oldTask.priority, newValue: task.priority });
+      }
+      if (task.status !== undefined && task.status !== oldTask.status) {
+        changes.push({ field: 'status', oldValue: oldTask.status, newValue: task.status });
+      }
+      if (task.deadline !== undefined && new Date(task.deadline).getTime() !== new Date(oldTask.deadline!).getTime()) {
+        changes.push({ field: 'deadline', oldValue: oldTask.deadline, newValue: task.deadline });
+      }
+      if (task.versionId !== undefined && task.versionId !== oldTask.versionId) {
+        changes.push({ field: 'versionId', oldValue: oldTask.versionId, newValue: task.versionId });
+      }
+      if (task.blockReason !== undefined && task.blockReason !== oldTask.blockReason) {
+        changes.push({ field: 'blockReason', oldValue: oldTask.blockReason, newValue: task.blockReason });
+      }
+
       const [rowsAffected, [updatedTask]] = await Task.update(
         {
           versionId: task.versionId,
@@ -104,6 +134,10 @@ export default class TaskService {
           success: false,
         };
         return response;
+      }
+
+      for (const change of changes) {
+        await this.addHistory(task.id, change.field, userId, change.oldValue, change.newValue);
       }
 
       response = {
@@ -681,7 +715,7 @@ export default class TaskService {
     }
   }
 
-  public static async updateStatus(taskId: number, newStatus: TaskStatusEnum): Promise<ResponseI> {
+  public static async updateStatus(taskId: number, newStatus: TaskStatusEnum, userId: number): Promise<ResponseI> {
     try {
       let response: ResponseI = {
         message: '',
@@ -705,6 +739,8 @@ export default class TaskService {
         return response;
       }
 
+      const oldStatus = TaskStatus.find(status => status.id === taskExists.status)?.name;
+
       const [rowsAffected, [updatedTask]] = await Task.update(
         {
           status: newStatus,
@@ -720,6 +756,10 @@ export default class TaskService {
         return response;
       }
 
+      const newStatuText = TaskStatus.find(status => status.id === newStatus)?.name;
+
+      await this.addHistory(taskId, 'status', userId, oldStatus, newStatuText);
+
       response = {
         message: 'Status da tarefa atualizado com sucesso.',
         success: true,
@@ -730,6 +770,119 @@ export default class TaskService {
       console.log(err);
       let response: ResponseI = {
         message: 'Erro ao atualizar status da tarefa, consulte o Log.',
+        success: false,
+      };
+      return response;
+    }
+  }
+
+  public static async addHistory(
+    taskId: number,
+    field: string,
+    changedBy: number,
+    oldValue?: any,
+    newValue?: any
+  ): Promise<ResponseI> {
+    try {
+      let response: ResponseI = {
+        message: '',
+        success: false,
+      };
+
+      if (!taskId || !field || !changedBy) {
+        response = {
+          message: 'Dados incompletos para adicionar histórico da tarefa.',
+          success: false,
+        };
+        return response;
+      }
+
+      const taskExists = await Task.findByPk(taskId);
+      if (!taskExists) {
+        response = {
+          message: 'Tarefa não encontrada.',
+          success: false,
+        };
+        return response;
+      }
+
+      const newHistory = await TaskHistory.create({
+        taskId: taskId,
+        field: field,
+        oldValue: oldValue !== undefined && oldValue !== null ? String(oldValue) : undefined,
+        newValue: newValue !== undefined && newValue !== null ? String(newValue) : undefined,
+        changedAt: new Date(),
+        changedBy: changedBy,
+      });
+
+      if (!newHistory) {
+        response = {
+          message: 'Erro ao adicionar histórico da tarefa, consulte o Log.',
+          success: false,
+        };
+        return response;
+      }
+
+      response = {
+        message: 'Histórico da tarefa adicionado com sucesso!',
+        success: true,
+        data: newHistory,
+      };
+      return response;
+    } catch (err) {
+      console.log(err);
+      let response: ResponseI = {
+        message: 'Erro ao adicionar histórico da tarefa, consulte o Log.',
+        success: false,
+      };
+      return response;
+    }
+  }
+
+  public static async getHistory(taskId: number): Promise<ResponseI> {
+    try {
+      let response: ResponseI = {
+        message: '',
+        success: false,
+      };
+
+      if (!taskId) {
+        response = {
+          message: 'Id da tarefa não informado!',
+          success: false,
+        };
+        return response;
+      }
+
+      const history: TaskHistory[] = await TaskHistory.findAll({
+        where: { taskId: taskId },
+        include: [
+          {
+            model: User,
+            attributes: ['id', 'fullName', 'username', 'image'],
+          },
+        ],
+        order: [['changedAt', 'DESC']],
+      });
+
+      if (!history) {
+        response = {
+          message: 'Nenhum histórico encontrado para esta tarefa.',
+          success: false,
+        };
+        return response;
+      }
+
+      response = {
+        message: 'Histórico da tarefa encontrado com sucesso.',
+        success: true,
+        data: history,
+      };
+      return response;
+    } catch (err) {
+      console.log(err);
+      let response: ResponseI = {
+        message: 'Erro ao buscar histórico da tarefa, consulte o Log.',
         success: false,
       };
       return response;

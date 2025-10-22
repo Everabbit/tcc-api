@@ -21,5 +21,6 @@ export default class TaskRoute {
     app
       .route('/tasks/removeattachment/:projectId/:attachmentId')
       .delete(this.middleware.validateToken, this.controller.deleteAttachment);
+    app.route('/tasks/history/:taskId').get(this.middleware.validateToken, this.controller.getHistory);
   }
 }

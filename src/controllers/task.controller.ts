@@ -180,7 +180,7 @@ export default class TaskController {
 
       let lastAssigneeId: number = getTask.data.assigneeId || 0;
 
-      const taskUpdated: ResponseI = await TaskService.update(updatedTask);
+      const taskUpdated: ResponseI = await TaskService.update(updatedTask, userId);
 
       if (!taskUpdated.success) {
         response = {
@@ -475,7 +475,7 @@ export default class TaskController {
         return ResponseValidator.response(req, res, HttpStatus.UNAUTHORIZED, response);
       }
 
-      const taskUpdated: ResponseI = await TaskService.updateStatus(taskId, newStatus);
+      const taskUpdated: ResponseI = await TaskService.updateStatus(taskId, newStatus, userId);
 
       if (!taskUpdated.success) {
         response = {
@@ -599,6 +599,49 @@ export default class TaskController {
       response = {
         message: 'Anexo removido com sucesso!',
         success: true,
+      };
+      return ResponseValidator.response(req, res, HttpStatus.OK, response);
+    } catch (err) {
+      console.log(err);
+      const response: ResponseI = {
+        message: `Erro: ${err}`,
+        success: false,
+      };
+      return ResponseValidator.response(req, res, HttpStatus.INTERNAL_SERVER_ERROR, response);
+    }
+  }
+
+  public async getHistory(req: Request, res: Response) {
+    try {
+      let response: ResponseI = {
+        message: '',
+        success: false,
+      };
+
+      const taskId: number = parseInt(req.params.taskId);
+
+      if (!taskId) {
+        response = {
+          message: 'Id da tarefa não informado!',
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.BAD_REQUEST, response);
+      }
+
+      const history: ResponseI = await TaskService.getHistory(taskId);
+
+      if (!history.success) {
+        response = {
+          message: history.message,
+          success: false,
+        };
+        return ResponseValidator.response(req, res, HttpStatus.NOT_FOUND, response);
+      }
+
+      response = {
+        message: 'Histórico da tarefa encontrado!',
+        success: true,
+        data: history.data,
       };
       return ResponseValidator.response(req, res, HttpStatus.OK, response);
     } catch (err) {

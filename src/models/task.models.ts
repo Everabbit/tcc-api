@@ -17,6 +17,7 @@ import { Version, VersionI } from './version.model';
 import { Attachment, AttachmentI } from './attachment.model';
 import { Comment, CommentI } from './comment.model';
 import TaskTag, { TaskTagI } from './task_tag.model';
+import { TaskHistory, TaskHistoryI } from './task_history.model';
 
 export interface TaskI {
   id?: number;
@@ -35,6 +36,7 @@ export interface TaskI {
   attachments?: AttachmentI[];
   comments?: CommentI[];
   tags?: TaskTagI[];
+  historys?: TaskHistoryI[];
 }
 
 @Table({
@@ -96,4 +98,7 @@ export class Task extends Model implements TaskI {
 
   @HasMany(() => TaskTag)
   tags?: TaskTagI[];
+
+  @HasMany(() => TaskHistory)
+  historys?: TaskHistoryI[];
 }
