@@ -12,6 +12,7 @@ import { Version } from '../models/version.model';
 import { Project } from '../models/project.model';
 import { deleteFile, uploadFile } from '../utils/files.utils';
 import { TaskHistory } from '../models/task_history.model';
+import { clone } from '../utils/utils';
 
 export default class TaskService {
   public static async create(task: TaskI): Promise<ResponseI> {
@@ -556,38 +557,40 @@ export default class TaskService {
         return response;
       }
 
-      const task: TaskI | null = await Task.findOne({
-        where: { id: taskId },
-        include: [
-          {
-            model: Attachment,
-          },
-          {
-            model: User,
-            attributes: ['id', 'fullName', 'username', 'image'],
-          },
-          {
-            model: TaskTag,
-            include: [
-              {
-                model: Tag,
-                attributes: ['id', 'name', 'color'],
-              },
-            ],
-            separate: true, // Otimiza a consulta de tags
-          },
-          {
-            model: Version,
-            attributes: ['id', 'name', 'description'],
-            include: [
-              {
-                model: Project,
-                attributes: ['id', 'name', 'description'],
-              },
-            ],
-          },
-        ],
-      });
+      const task: TaskI | null = clone(
+        await Task.findOne({
+          where: { id: taskId },
+          include: [
+            {
+              model: Attachment,
+            },
+            {
+              model: User,
+              attributes: ['id', 'fullName', 'username', 'image'],
+            },
+            {
+              model: TaskTag,
+              include: [
+                {
+                  model: Tag,
+                  attributes: ['id', 'name', 'color'],
+                },
+              ],
+              separate: true, // Otimiza a consulta de tags
+            },
+            {
+              model: Version,
+              attributes: ['id', 'name', 'description'],
+              include: [
+                {
+                  model: Project,
+                  attributes: ['id', 'name', 'description'],
+                },
+              ],
+            },
+          ],
+        })
+      );
 
       if (!task) {
         response = {
