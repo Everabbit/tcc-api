@@ -16,12 +16,11 @@ import { ChangePasswordRequest } from './models/change_password_request.model';
 import { EmailChangeRequest } from './models/email_change_request.model';
 import { Notification } from './models/notification.model';
 import { TaskHistory } from './models/task_history.model';
-import { TaskColumn } from './models/task_column.model';
 
 if (!process.env.DATABASE_URL) {
   throw new Error('DATABASE_URL is not set in the environment variables.');
 }
-
+                                                                                                                                                                     // Márcio, Betito e Brião estiveram aqui
 const isProduction = process.env.NODE_ENV === 'production';
 
 const sequelize = new Sequelize(process.env.DATABASE_URL, {
@@ -50,8 +49,7 @@ const sequelize = new Sequelize(process.env.DATABASE_URL, {
     ChangePasswordRequest,
     EmailChangeRequest,
     Notification,
-    TaskHistory,
-    TaskColumn
+    TaskHistory
   ], // ARQUIVOS DE MODEL
   logging: false, // Opcional: desativa logs de SQL no console
 });
